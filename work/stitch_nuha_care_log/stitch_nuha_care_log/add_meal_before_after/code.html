@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Meal - Nuha Care</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e4e4cc",
+                        "outline-variant": "#c3c8c2",
+                        "surface-container-highest": "#e4e4cc",
+                        "secondary": "#526069",
+                        "primary-fixed": "#d9e6da",
+                        "on-surface-variant": "#434844",
+                        "on-error": "#ffffff",
+                        "background": "#fbfbe2",
+                        "surface-container-high": "#eaead1",
+                        "tertiary-fixed-dim": "#d4c2c5",
+                        "on-background": "#1b1d0e",
+                        "inverse-primary": "#bdcabe",
+                        "secondary-fixed": "#d6e5ef",
+                        "secondary-fixed-dim": "#bac9d3",
+                        "on-primary-container": "#647167",
+                        "on-secondary-fixed-variant": "#3b4951",
+                        "outline": "#747873",
+                        "on-surface": "#1b1d0e",
+                        "on-error-container": "#93000a",
+                        "primary": "#556158",
+                        "secondary-container": "#d3e2ed",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#695b5e",
+                        "primary-container": "#e8f5e9",
+                        "on-tertiary-container": "#796a6d",
+                        "surface-container": "#efefd7",
+                        "surface-tint": "#556158",
+                        "tertiary-fixed": "#f1dee1",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#bdcabe",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#23191b",
+                        "on-primary-fixed": "#131e17",
+                        "on-primary-fixed-variant": "#3e4a41",
+                        "surface": "#fbfbe2",
+                        "tertiary-container": "#ffedf0",
+                        "on-secondary-fixed": "#0f1d25",
+                        "on-tertiary-fixed-variant": "#504346",
+                        "surface-bright": "#fbfbe2",
+                        "inverse-surface": "#303221",
+                        "surface-dim": "#dbdcc3",
+                        "on-secondary-container": "#56656e",
+                        "surface-container-low": "#f5f5dc",
+                        "inverse-on-surface": "#f2f2d9",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "48px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "container-margin": "20px",
+                        "card-gap": "16px",
+                        "base": "8px",
+                        "lg": "32px",
+                        "md": "20px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "label-caps": ["Quicksand"],
+                        "headline-lg": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "500"}],
+                        "label-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #fbfbe2;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-shadow {
+            box-shadow: 0 20px 20px -4px rgba(85, 97, 88, 0.06);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #556158;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="bg-background dark:bg-background sticky top-0 z-50 flex justify-between items-center w-full px-container-margin py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="Nuha's profile photo" class="w-full h-full object-cover" data-alt="A close-up portrait of a soft-featured woman with a kind expression, illuminated by warm, morning sunlight in a serene room. The background is softly blurred with hints of light beige and cream. The image conveys a sense of calm, maternal care and gentle stewardship, consistent with a high-end nursing and family wellness app aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5ObLBqI8CYL61hJfETwdk7rG7kPrB5O3IUqqXYaCJfWS9xQKJMrerNX6l_ktc4MY9QME9CUhmFNJE_KJ44YLOAubYzIQJ9Lug-oIUHhmVFmbyZwibJEhXcg95MlHWJd4RSlHZtCnNIQjon9QyTM4u7tztKHQ5XTVBDEEVZt_Ev5taz7C2q1zfMEj-RQ40zpj-fAKphFoLfebDV2RnfjU7_3UMq0IYGzj05kU-elfvWvexONXJxxpCuLineu38iwMokdRtOd6fSw"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Nuha Care</h1>
+</div>
+<button class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-variant/20 transition-colors duration-200">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="calendar_today">calendar_today</span>
+</button>
+</header>
+<main class="max-w-3xl mx-auto px-container-margin mt-base">
+<div class="flex flex-col gap-lg">
+<!-- Page Header -->
+<div class="flex flex-col gap-xs">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Log a Meal</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Document the journey from prep to plate.</p>
+</div>
+<!-- Section 1: Before Meal (The Setup) -->
+<section class="bg-surface-container-low rounded-lg p-md custom-shadow border border-surface-variant/30 flex flex-col gap-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="restaurant">restaurant</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">1. Before Meal</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Meal Type -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Meal Type</label>
+<select class="w-full h-14 px-md bg-surface-container-high rounded-lg border-none font-body-md text-on-surface appearance-none">
+<option>Breakfast</option>
+<option>Lunch</option>
+<option>Dinner</option>
+<option>Snack</option>
+</select>
+</div>
+<!-- Start Time -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Time Started</label>
+<input class="w-full h-14 px-md bg-surface-container-high rounded-lg border-none font-body-md text-on-surface" type="time"/>
+</div>
+</div>
+<!-- Food Details -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Food &amp; Drink Details</label>
+<textarea class="w-full p-md bg-surface-container-high rounded-lg border-none font-body-md text-on-surface resize-none" placeholder="What's on the menu today?" rows="3"></textarea>
+</div>
+<!-- Before Photo Upload -->
+<div class="relative group">
+<div class="w-full h-48 border-2 border-dashed border-outline-variant rounded-lg flex flex-col items-center justify-center gap-base bg-surface-container-highest/30 hover:bg-surface-container-highest/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="add_a_photo">add_a_photo</span>
+<span class="font-label-sm text-label-sm text-primary">Upload Before Photo</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant/60">Helpful for tracking presentation</p>
+</div>
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+</section>
+<!-- Section 2: After Meal (The Progress) -->
+<section class="bg-surface-container-low rounded-lg p-md custom-shadow border border-surface-variant/30 flex flex-col gap-md relative overflow-hidden">
+<!-- Subtle background decoration -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 bg-secondary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="task_alt">task_alt</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">2. After Meal</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Finish Time -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Time Finished</label>
+<input class="w-full h-14 px-md bg-surface-container-high rounded-lg border-none font-body-md text-on-surface" type="time"/>
+</div>
+<!-- Feeding Method -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Feeding Method</label>
+<select class="w-full h-14 px-md bg-surface-container-high rounded-lg border-none font-body-md text-on-surface">
+<option>Self-Fed</option>
+<option>Assisted</option>
+<option>Tube Fed</option>
+<option>Bottle</option>
+</select>
+</div>
+</div>
+<!-- Amount Eaten Selector -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">How much was eaten?</label>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-sm">
+<button class="h-16 rounded-lg bg-surface-container-high hover:bg-primary hover:text-white transition-all duration-200 flex items-center justify-center font-label-sm text-label-sm text-on-surface">Finished all</button>
+<button class="h-16 rounded-lg bg-primary-container border-2 border-primary text-primary flex items-center justify-center font-label-sm text-label-sm">Ate half</button>
+<button class="h-16 rounded-lg bg-surface-container-high hover:bg-primary hover:text-white transition-all duration-200 flex items-center justify-center font-label-sm text-label-sm text-on-surface">Tasted some</button>
+<button class="h-16 rounded-lg bg-surface-container-high hover:bg-primary hover:text-white transition-all duration-200 flex items-center justify-center font-label-sm text-label-sm text-on-surface">Refused</button>
+</div>
+</div>
+<!-- Drink Status -->
+<div class="flex items-center justify-between bg-surface-container-high p-md rounded-lg">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">Drink finished?</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Hydration tracking</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- After Photo Upload -->
+<div class="relative group">
+<div class="w-full h-48 border-2 border-dashed border-outline-variant rounded-lg flex flex-col items-center justify-center gap-base bg-surface-container-highest/30 hover:bg-surface-container-highest/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-secondary text-xl" data-icon="photo_library">photo_library</span>
+<span class="font-label-sm text-label-sm text-secondary">Upload After Photo</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant/60">Documentation of leftover portions</p>
+</div>
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+<!-- Meal Issues Checklist -->
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Any issues during the meal?</label>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+<label class="flex items-center gap-md p-md bg-surface-container-highest/30 rounded-lg cursor-pointer hover:bg-surface-container-highest/50 transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Refusal</span>
+</label>
+<label class="flex items-center gap-md p-md bg-surface-container-highest/30 rounded-lg cursor-pointer hover:bg-surface-container-highest/50 transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Coughing</span>
+</label>
+<label class="flex items-center gap-md p-md bg-surface-container-highest/30 rounded-lg cursor-pointer hover:bg-surface-container-highest/50 transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Gagging</span>
+</label>
+<label class="flex items-center gap-md p-md bg-surface-container-highest/30 rounded-lg cursor-pointer hover:bg-surface-container-highest/50 transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Distracted</span>
+</label>
+</div>
+</div>
+</section>
+<!-- Save Button -->
+<button class="w-full h-16 bg-primary text-white rounded-lg font-headline-md text-headline-md shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-sm mb-lg">
+<span class="material-symbols-outlined" data-icon="save" data-weight="fill">save</span>
+                Save Meal Log
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-6 pt-2 bg-surface-container dark:bg-surface-dim shadow-[0_-4px_20px_-4px_rgba(85,97,88,0.06)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-label-sm text-label-sm">Logs</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-2xl px-4 py-2 active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-label-sm text-label-sm">Meals</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+<span class="font-label-sm text-label-sm">Meds</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+<span class="font-label-sm text-label-sm">Appts</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if(this.classList.contains('bg-surface-container-high')) {
+                    // Reset others in the group if it's the meal amount group
+                    const group = this.parentElement;
+                    group.querySelectorAll('button').forEach(b => {
+                        b.classList.remove('bg-primary-container', 'border-2', 'border-primary', 'text-primary');
+                        b.classList.add('bg-surface-container-high', 'text-on-surface');
+                    });
+                    this.classList.remove('bg-surface-container-high', 'text-on-surface');
+                    this.classList.add('bg-primary-container', 'border-2', 'border-primary', 'text-primary');
+                }
+            });
+        });
+    </script>
+</body></html>

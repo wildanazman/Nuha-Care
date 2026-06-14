@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e4e4cc",
+                    "outline-variant": "#c3c8c2",
+                    "surface-container-highest": "#e4e4cc",
+                    "secondary": "#526069",
+                    "primary-fixed": "#d9e6da",
+                    "on-surface-variant": "#434844",
+                    "on-error": "#ffffff",
+                    "background": "#fbfbe2",
+                    "surface-container-high": "#eaead1",
+                    "tertiary-fixed-dim": "#d4c2c5",
+                    "on-background": "#1b1d0e",
+                    "inverse-primary": "#bdcabe",
+                    "secondary-fixed": "#d6e5ef",
+                    "secondary-fixed-dim": "#bac9d3",
+                    "on-primary-container": "#647167",
+                    "on-secondary-fixed-variant": "#3b4951",
+                    "outline": "#747873",
+                    "on-surface": "#1b1d0e",
+                    "on-error-container": "#93000a",
+                    "primary": "#556158",
+                    "secondary-container": "#d3e2ed",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary": "#695b5e",
+                    "primary-container": "#e8f5e9",
+                    "on-tertiary-container": "#796a6d",
+                    "surface-container": "#efefd7",
+                    "surface-tint": "#556158",
+                    "tertiary-fixed": "#f1dee1",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#bdcabe",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#23191b",
+                    "on-primary-fixed": "#131e17",
+                    "on-primary-fixed-variant": "#3e4a41",
+                    "surface": "#fbfbe2",
+                    "tertiary-container": "#ffedf0",
+                    "on-secondary-fixed": "#0f1d25",
+                    "on-tertiary-fixed-variant": "#504346",
+                    "surface-bright": "#fbfbe2",
+                    "inverse-surface": "#303221",
+                    "surface-dim": "#dbdcc3",
+                    "on-secondary-container": "#56656e",
+                    "surface-container-low": "#f5f5dc",
+                    "inverse-on-surface": "#f2f2d9",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "48px",
+                    "sm": "12px",
+                    "xs": "4px",
+                    "container-margin": "20px",
+                    "card-gap": "16px",
+                    "base": "8px",
+                    "lg": "32px",
+                    "md": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Quicksand"],
+                    "label-sm": ["Quicksand"],
+                    "headline-lg-mobile": ["Quicksand"],
+                    "body-md": ["Quicksand"],
+                    "headline-md": ["Quicksand"],
+                    "label-caps": ["Quicksand"],
+                    "headline-lg": ["Quicksand"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "label-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #fbfbe2;
+            font-family: 'Quicksand', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .soft-shadow {
+            shadow-color: rgba(85, 97, 88, 0.06);
+            box-shadow: 0 20px 20px -4px rgba(85, 97, 88, 0.06);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen text-on-surface">
+<!-- Top App Bar -->
+<header class="bg-background dark:bg-background flex justify-between items-center w-full px-container-margin py-md sticky top-0 z-50">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="Nuha's profile photo" class="w-full h-full object-cover" data-alt="A warm, professional portrait of a woman caregiver in a soft-lit room with natural cream-colored walls. The lighting is gentle and flattering, emphasizing a mood of calm capability and gentle stewardship. Her expression is kind and focused, set against a soft-focus background of a tidy nursery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaUE6-qEKsvijfGy1u6NoJ4Mvg4OfSPVS8vx5_1I85WikVf9LYDMvPTyU9PtAnp8KWEpxMizUeJfD0bAP2lKqJU4OZKtZdRcCN2aXiDDeSeuvXOu_rDsXGyg3lGIL0f4bjEme5vNC_EC4H6ktca80DRtThwi86h7o0BaNcxfUA4dd2zNwZBQgAfZZ-Bkiq8VLWnCCk4fYL3xmHrVWXZTl_f5cpzqCyF6HDxdvrCSaOHXEwPOJ62L_-KLHjNPaRzzfw7ktbDbCdmA"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Nuha Care</h1>
+</div>
+<button class="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-variant/20 transition-colors duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+</button>
+</header>
+<main class="px-container-margin pb-32">
+<!-- Date Selector -->
+<section class="mt-base overflow-x-auto custom-scrollbar flex gap-sm py-sm -mx-container-margin px-container-margin">
+<button class="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-lg bg-surface-container-low text-on-surface-variant transition-all active:scale-95">
+<span class="font-label-caps text-label-caps opacity-70">MON</span>
+<span class="font-headline-md text-headline-md">12</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-lg bg-surface-container-low text-on-surface-variant transition-all active:scale-95">
+<span class="font-label-caps text-label-caps opacity-70">TUE</span>
+<span class="font-headline-md text-headline-md">13</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-lg bg-primary text-on-primary shadow-md transition-all scale-105">
+<span class="font-label-caps text-label-caps opacity-80">WED</span>
+<span class="font-headline-md text-headline-md">14</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-lg bg-surface-container-low text-on-surface-variant transition-all active:scale-95">
+<span class="font-label-caps text-label-caps opacity-70">THU</span>
+<span class="font-headline-md text-headline-md">15</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[64px] h-20 rounded-lg bg-surface-container-low text-on-surface-variant transition-all active:scale-95">
+<span class="font-label-caps text-label-caps opacity-70">FRI</span>
+<span class="font-headline-md text-headline-md">16</span>
+</button>
+</section>
+<!-- Progress Indicator -->
+<section class="mt-lg bg-primary-container/40 p-md rounded-lg flex items-center justify-between">
+<div class="flex-1 mr-lg">
+<div class="flex justify-between mb-base">
+<span class="font-label-sm text-label-sm text-primary">Daily Meal Goal</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">4 / 6</span>
+</div>
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-700" style="width: 66%"></div>
+</div>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-primary/20 flex items-center justify-center">
+<span class="font-headline-md text-headline-md text-primary">66%</span>
+</div>
+</section>
+<!-- Meal List -->
+<section class="mt-lg flex flex-col gap-card-gap">
+<!-- Breakfast Card -->
+<div class="bg-surface-container-lowest p-md rounded-lg soft-shadow border border-surface-variant/10 group transition-all hover:translate-y-[-2px]">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Breakfast</h3>
+<div class="flex items-center gap-xs text-on-surface-variant mt-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">08:15 AM</span>
+</div>
+</div>
+<span class="px-sm py-xs bg-primary/10 text-primary font-label-caps text-label-caps rounded-full">Finished</span>
+</div>
+<div class="flex gap-md mb-md">
+<div class="flex-1 aspect-[4/3] rounded-md overflow-hidden bg-surface-container relative group-hover:opacity-95">
+<img alt="Before Meal" class="w-full h-full object-cover" data-alt="A top-down view of a colorful baby breakfast bowl with oatmeal, sliced strawberries, and bananas. The setting is bright and sunny on a warm cream-colored table, reflecting a soft-modern and cheerful morning atmosphere with high-key lighting and natural textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC10UeOT16FKdOjv2c8pgGF34RGPtNUGnLoS_-13MU57kluiYew593i2DdyPLY1NXXio0_J8QoYazBnwaorpB-zAKEbUTpcf1tha5S6hOVa3U5m7E3Wa9Qw6ib6lH_AxpLFifJ5OWFvqJnriInL2fG1g39HuLMRKk9mLa69SrFxp36tebJdF5yaON9kFHTA-cc8m3E8N0nM0xbzTuCWS4XIiSIcj9PaSO9ClCLdo9Ic_OsFh2CjcSiOxpo9RC0Ogw3oJH2-fNnLsA"/>
+<div class="absolute bottom-1 left-1 px-xs bg-black/40 text-white font-label-caps text-[10px] rounded backdrop-blur-sm">BEFORE</div>
+</div>
+<div class="flex-1 aspect-[4/3] rounded-md overflow-hidden bg-surface-container relative group-hover:opacity-95">
+<img alt="After Meal" class="w-full h-full object-cover" data-alt="A top-down view of an empty baby bowl with slight remnants of oatmeal, signifying a finished meal. The lighting remains bright and warm, consistent with the morning aesthetic, highlighting the clean, minimalist wooden spoon resting inside the bowl." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuPM7u61eJMqo9bbLAehi8xWtMJ8LBpCzEFXdJ139hmzo1fNRFO-pYnpIltmLnNv4RFOXNdq3dbv82HqztOuLWjA8a2c0pR6268SBzBQ0qDqWaQadD28lE1eOL00Vx74ZFH0XDOSKkNCyJOBUfvRUmYa7bgz0cN0AjSMOQO63pMQy44fJhm8pOro4ck28lZ3vutEZN1gVFDzUDjxx_Nw7Q4uuDTeqO2iAuH_8G0uLs5PinAZOh-_XRQAJfBDw2EP9IQvXuvt4HoQ"/>
+<div class="absolute bottom-1 left-1 px-xs bg-black/40 text-white font-label-caps text-[10px] rounded backdrop-blur-sm">AFTER</div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Pureed oats with organic strawberries. Seemed very interested and finished everything today.</p>
+</div>
+<!-- Lunch Card -->
+<div class="bg-surface-container-lowest p-md rounded-lg soft-shadow border border-surface-variant/10 group transition-all hover:translate-y-[-2px]">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Lunch</h3>
+<div class="flex items-center gap-xs text-on-surface-variant mt-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">12:30 PM</span>
+</div>
+</div>
+<span class="px-sm py-xs bg-tertiary/10 text-tertiary font-label-caps text-label-caps rounded-full">Ate Half</span>
+</div>
+<div class="flex gap-md mb-md">
+<div class="flex-1 aspect-[4/3] rounded-md overflow-hidden bg-surface-container relative">
+<img alt="Before Meal" class="w-full h-full object-cover" data-alt="A healthy lunch preparation for a child featuring sweet potato mash and shredded chicken in a pastel-colored dish. The scene is shot in a clean, soft-modern kitchen with warm beige tones and gentle afternoon light creating a peaceful, organized mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0WlBJOunRwYepELW3_9sepBnXeihas6CRqMxfcyiL43zaksq0WG8koKFlLwavmuY6Z0J--XbiEAIhJnO0fZ6c8UlyHm9A2ohlqZ11Bq5Q-KooNUJ9pYC_Erp_-4TADPexo8W6UpghZ7DDYwvDC7Ft3IDAMm5kRc_DoVk0jHZ1MhlH_IYt1FYtP16wk-Qm7zsrWC8nfACw8TrWl7G7OAVItXiSJofS9Ug3rvsybeYCod8T8UNPgQw7fREL8cMxoUzNlBWwakRSww"/>
+<div class="absolute bottom-1 left-1 px-xs bg-black/40 text-white font-label-caps text-[10px] rounded backdrop-blur-sm">BEFORE</div>
+</div>
+<div class="flex-1 aspect-[4/3] rounded-md overflow-hidden bg-surface-container relative">
+<img alt="After Meal" class="w-full h-full object-cover" data-alt="A photo of a half-finished plate of sweet potato mash and chicken, showing progress. The surrounding environment is a soft, domestic setting with warm cream colors and subtle shadows, maintaining a gentle stewardship aesthetic throughout the imagery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6dsd10pTWX3UWfGBwdomtIg-8OZ4fX9fgiWDeemu9XbMMz1XLyclXLHPHKeoiKsgXclz2WklroemAXCTA__zT6-XRjQz2dM3FxwfmDtH046z_hRbKAs8Abme4lpI_Y5_RpOoa5hcv8_vjljXvC-gYqUeQPNTgAgOF2_zfO0hkajKRQEqBeJCBRzMHhhiUT644YAGiX4fkAO6ITA_nj4ldUO4tYlWxzm1LNS7rF5PmiXrnnbUDvGukAvD2EQNJ6EH08ulxYdPIhQ"/>
+<div class="absolute bottom-1 left-1 px-xs bg-black/40 text-white font-label-caps text-[10px] rounded backdrop-blur-sm">AFTER</div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Sweet potato and chicken mash. Got distracted by the dog halfway through.</p>
+</div>
+<!-- Snack Card -->
+<div class="bg-surface-container-lowest p-md rounded-lg soft-shadow border border-surface-variant/10 opacity-70">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-outline">Afternoon Snack</h3>
+<div class="flex items-center gap-xs text-outline mt-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">Scheduled for 03:30 PM</span>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/5 text-primary">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-28 right-container-margin w-14 h-14 bg-primary text-on-primary rounded-lg shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40">
+<span class="material-symbols-outlined text-[32px]" data-icon="add">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-6 pt-2 bg-surface-container dark:bg-surface-dim shadow-[0_-4px_20px_-4px_rgba(85,97,88,0.06)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="font-label-sm text-label-sm">Logs</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-2xl px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-label-sm text-label-sm">Meals</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+<span class="font-label-sm text-label-sm">Meds</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+<span class="font-label-sm text-label-sm">Appts</span>
+</button>
+</nav>
+<script>
+        // Simple interactive demo logic
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active classes from all
+                document.querySelectorAll('nav button').forEach(b => {
+                    b.className = "flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200";
+                    const icon = b.querySelector('.material-symbols-outlined');
+                    if(icon) icon.style.fontVariationSettings = "'FILL' 0";
+                });
+                // Add active to current
+                this.className = "flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-2xl px-4 py-2 hover:opacity-80 active:scale-95 transition-all duration-200";
+                const icon = this.querySelector('.material-symbols-outlined');
+                if(icon) icon.style.fontVariationSettings = "'FILL' 1";
+            });
+        });
+
+        // Tonal pulse effect on progress circle
+        const circle = document.querySelector('.w-16.h-16');
+        if (circle) {
+            setInterval(() => {
+                circle.classList.add('scale-105');
+                setTimeout(() => circle.classList.remove('scale-105'), 1000);
+            }, 3000);
+        }
+    </script>
+</body></html>
