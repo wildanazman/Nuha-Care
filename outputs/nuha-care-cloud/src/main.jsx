@@ -13,6 +13,9 @@ import {
   Scale,
   Settings,
   UserRound,
+  FileText,
+  MoreHorizontal,
+  Printer,
 } from 'lucide-react';
 import {
   addAppointment,
@@ -21,8 +24,17 @@ import {
   addMeal,
   addMedicine,
   addWeight,
+  deleteAppointment,
+  deleteMeal,
+  deleteMedicine,
+  deleteWeight,
   ensureDefaultFamilyMembers,
   getLogs,
+  getLogsForDate,
+  updateAppointment,
+  updateMeal,
+  updateMedicine,
+  updateWeight,
 } from './data';
 import { isSupabaseConfigured } from './supabase';
 import './styles.css';
@@ -39,6 +51,7 @@ function App() {
   const [members, setMembers] = useState([]);
   const [logs, setLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], appointments: [] });
   const [screen, setScreen] = useState('home');
+  const [formDate, setFormDate] = useState(today());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -88,12 +101,14 @@ function App() {
       {error && <p className="error">{error}</p>}
       {loading && <p className="muted">Loading data Supabase...</p>}
       {screen === 'home' && <HomeScreen logs={logs} activeMember={activeMember} setScreen={setScreen} />}
-      {screen === 'meal' && <MealsScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} />}
-      {screen === 'weight' && <WeightScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} />}
-      {screen === 'meds' && <MedicineScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} />}
-      {screen === 'bowel' && <BowelScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} />}
-      {screen === 'appointments' && <AppointmentsScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} />}
-      {screen === 'summary' && <SummaryScreen logs={logs} />}
+      {screen === 'meal' && <MealsScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'weight' && <WeightScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'meds' && <MedicineScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'bowel' && <BowelScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'appointments' && <AppointmentsScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'summary' && <LogsReviewScreen setScreen={setScreen} setFormDate={setFormDate} />}
+      {screen === 'more' && <MoreScreen setScreen={setScreen} />}
+      {screen === 'report' && <WeeklyReportScreen logs={logs} />}
       {screen === 'settings' && <SettingsScreen members={members} activeMember={activeMember} onSelect={selectMember} onAdded={refresh} onLogout={logout} />}
     </Shell>
   );
@@ -201,9 +216,9 @@ function HomeScreen({ logs, activeMember, setScreen }) {
           <p className="big small">{todayMeds.filter((row) => row.status === 'Taken').length}<span> taken</span></p>
           <p className="muted">{todayMeds.length ? `${todayMeds.length} log hari ini` : 'Belum ada medicine log.'}</p>
         </Card>
-        <Card title="Bowel" tone="blue">
+        <Card title="Toilet Log" tone="blue">
           <p className="big small">{todayBowel?.status ?? '-'}</p>
-          <p className="muted">{todayBowel ? todayBowel.type || 'Logged' : 'Belum ada bowel log hari ini.'}</p>
+          <p className="muted">{todayBowel ? todayBowel.type || 'Logged' : 'Tak pergi tandas lagi hari ni.'}</p>
         </Card>
         <Card title="Appointment" icon={<CalendarDays size={20} />} tone="white">
           {nextAppt ? <p><strong>{nextAppt.title}</strong><br /><span className="muted">{moneyDate(nextAppt.date)} {nextAppt.time || ''}</span></p> : <Empty text="Belum ada appointment akan datang." />}
@@ -225,20 +240,58 @@ function HomeScreen({ logs, activeMember, setScreen }) {
   );
 }
 
-function MealsScreen({ logs, activeMember, refresh, setError }) {
+function MealsScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    date: today(), meal_type: 'Breakfast', time_served: nowTime(), food_details: '',
+  const [editingId, setEditingId] = useState(null);
+  const emptyMealForm = {
+    date: initialDate, meal_type: 'Breakfast', time_served: nowTime(), food_details: '',
     food_amount_served: '', drink_details: '', drink_amount_served: '', before_notes: '',
     time_finished: '', food_amount_eaten: 'Finished all', drink_amount_finished: 'Finished all',
     feeding_method: 'Self', issues: [], after_notes: '', beforePhotoFile: null, afterPhotoFile: null,
-  });
+  };
+  const [form, setForm] = useState(emptyMealForm);
+  function editMeal(meal) {
+    setEditingId(meal.id);
+    setForm({
+      date: meal.date ?? today(),
+      meal_type: meal.meal_type ?? 'Breakfast',
+      time_served: meal.time_served ?? '',
+      food_details: meal.food_details ?? '',
+      food_amount_served: meal.food_amount_served ?? '',
+      drink_details: meal.drink_details ?? '',
+      drink_amount_served: meal.drink_amount_served ?? '',
+      before_notes: meal.before_notes ?? '',
+      time_finished: meal.time_finished ?? '',
+      food_amount_eaten: meal.food_amount_eaten ?? 'Finished all',
+      drink_amount_finished: meal.drink_amount_finished ?? 'Finished all',
+      feeding_method: meal.feeding_method ?? 'Self',
+      issues: meal.issues ?? [],
+      after_notes: meal.after_notes ?? '',
+      beforePhotoFile: null,
+      afterPhotoFile: null,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function resetMealForm() {
+    setEditingId(null);
+    setForm(emptyMealForm);
+  }
+  async function removeMeal(id) {
+    if (!window.confirm('Delete meal log?')) return;
+    setError('');
+    try {
+      await deleteMeal(id);
+      if (editingId === id) resetMealForm();
+      await refresh();
+    } catch (err) { setError(err.message); }
+  }
   async function submit(event) {
     event.preventDefault();
     setSaving(true); setError('');
     try {
-      await addMeal(form, activeMember);
-      setForm((old) => ({ ...old, food_details: '', food_amount_served: '', drink_details: '', drink_amount_served: '', before_notes: '', after_notes: '', beforePhotoFile: null, afterPhotoFile: null }));
+      if (editingId) await updateMeal(editingId, form);
+      else await addMeal(form, activeMember);
+      resetMealForm();
       await refresh();
     } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
@@ -259,50 +312,333 @@ function MealsScreen({ logs, activeMember, refresh, setError }) {
         <File label="After photo" onChange={(file) => setForm({ ...form, afterPhotoFile: file })} />
         <Checklist label="Issues" values={form.issues} options={['No issue', 'Chewing difficulty', 'Swallowing difficulty', 'Spit out food', 'Coughing', 'Vomited', 'Refused', 'Took long time']} onChange={(issues) => setForm({ ...form, issues })} />
         <Text label="After notes" value={form.after_notes} onChange={(v) => setForm({ ...form, after_notes: v })} />
-        <button className="primary save" disabled={saving}><Save size={20} />{saving ? 'Saving...' : 'Save Meal Log'}</button>
+        <button className="primary save" disabled={saving}><Save size={20} />{saving ? 'Saving...' : editingId ? 'Update Meal Log' : 'Save Meal Log'}</button>
+        {editingId && <button className="secondary-action" type="button" onClick={resetMealForm}>Cancel edit</button>}
       </form>
-      <LogList rows={logs.meals} empty="Belum ada meal log." render={(meal) => <MealCard meal={meal} />} />
+      <LogList rows={logs.meals} empty="Belum ada meal log." render={(meal) => <MealCard meal={meal} onEdit={() => editMeal(meal)} onDelete={() => removeMeal(meal.id)} />} />
     </Screen>
   );
 }
 
-function WeightScreen({ logs, activeMember, refresh, setError }) {
-  const [form, setForm] = useState({ date: today(), time: nowTime(), weight_kg: '', notes: '' });
-  return <SimpleForm title="Weight" subtitle="Add weight and view history." form={form} setForm={setForm} onSave={() => addWeight(form, activeMember)} refresh={refresh} setError={setError} logs={logs.weights} empty="Belum ada berat direkod." fields={<><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Weight kg" type="number" step="0.1" required value={form.weight_kg} onChange={(v) => setForm({ ...form, weight_kg: v })} /><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row) => <BasicLog title={`${row.weight_kg} kg`} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} />} />;
+function WeightScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
+  const initialForm = { date: initialDate, time: nowTime(), weight_kg: '', notes: '' };
+  const [form, setForm] = useState(initialForm);
+  return <SimpleForm title="Weight" subtitle="Add weight and view history." form={form} setForm={setForm} initialForm={initialForm} onSave={() => addWeight(form, activeMember)} onUpdate={(id) => updateWeight(id, form)} onDelete={deleteWeight} toForm={(row) => ({ date: row.date ?? today(), time: row.time ?? '', weight_kg: row.weight_kg ?? '', notes: row.notes ?? '' })} refresh={refresh} setError={setError} logs={logs.weights} empty="Belum ada berat direkod." fields={<><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Weight kg" type="number" step="0.1" required value={form.weight_kg} onChange={(v) => setForm({ ...form, weight_kg: v })} /><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row, actions) => <BasicLog title={`${row.weight_kg} kg`} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} {...actions} />} />;
 }
 
-function MedicineScreen({ logs, activeMember, refresh, setError }) {
-  const [form, setForm] = useState({ date: today(), time: nowTime(), medicine_name: '', dosage: '', status: 'Taken', notes: '' });
-  return <SimpleForm title="Medicine" subtitle="Log medicine taken, missed or skipped." form={form} setForm={setForm} onSave={() => addMedicine(form, activeMember)} refresh={refresh} setError={setError} logs={logs.medicines} empty="Belum ada medicine log." fields={<><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Medicine name" required value={form.medicine_name} onChange={(v) => setForm({ ...form, medicine_name: v })} /><div className="grid two"><Field label="Dosage" value={form.dosage} onChange={(v) => setForm({ ...form, dosage: v })} /><Select label="Status" value={form.status} options={['Taken', 'Missed', 'Skipped']} onChange={(v) => setForm({ ...form, status: v })} /></div><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row) => <BasicLog title={`${row.medicine_name} - ${row.status}`} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} />} />;
+function MedicineScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
+  const initialForm = { date: initialDate, time: nowTime(), medicine_name: '', dosage: '', status: 'Taken', notes: '' };
+  const [form, setForm] = useState(initialForm);
+  return <SimpleForm title="Medicine" subtitle="Log medicine taken, missed or skipped." form={form} setForm={setForm} initialForm={initialForm} onSave={() => addMedicine(form, activeMember)} onUpdate={(id) => updateMedicine(id, form)} onDelete={deleteMedicine} toForm={(row) => ({ date: row.date ?? today(), time: row.time ?? '', medicine_name: row.medicine_name ?? '', dosage: row.dosage ?? '', status: row.status ?? 'Taken', notes: row.notes ?? '' })} refresh={refresh} setError={setError} logs={logs.medicines} empty="Belum ada medicine log." fields={<><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Medicine name" required value={form.medicine_name} onChange={(v) => setForm({ ...form, medicine_name: v })} /><div className="grid two"><Field label="Dosage" value={form.dosage} onChange={(v) => setForm({ ...form, dosage: v })} /><Select label="Status" value={form.status} options={['Taken', 'Missed', 'Skipped']} onChange={(v) => setForm({ ...form, status: v })} /></div><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row, actions) => <BasicLog title={`${row.medicine_name} - ${row.status}`} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} {...actions} />} />;
 }
 
-function BowelScreen({ logs, activeMember, refresh, setError }) {
-  const [form, setForm] = useState({ date: today(), status: 'Yes', type: 'Normal', notes: '' });
+function BowelScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
+  const [form, setForm] = useState({ date: initialDate, status: 'Yes', type: 'Normal', notes: '' });
   return <SimpleForm title="Bowel Movement" subtitle="Simple daily bowel record." form={form} setForm={setForm} onSave={() => addBowel(form, activeMember)} refresh={refresh} setError={setError} logs={logs.bowels} empty="Belum ada bowel log." fields={<><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><div className="grid two"><Select label="Status" value={form.status} options={['Yes', 'No', 'Not sure']} onChange={(v) => setForm({ ...form, status: v })} /><Select label="Type" value={form.type} options={['Normal', 'Hard', 'Soft', 'Watery', 'Not sure']} onChange={(v) => setForm({ ...form, type: v })} /></div><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row) => <BasicLog title={`${row.status}${row.type ? ` - ${row.type}` : ''}`} meta={moneyDate(row.date)} row={row} />} />;
 }
 
-function AppointmentsScreen({ logs, activeMember, refresh, setError }) {
-  const [form, setForm] = useState({ title: '', date: today(), time: '', location: '', reason: '', questions: '', after_notes: '' });
-  return <SimpleForm title="Appointments" subtitle="Doctor visits and questions." form={form} setForm={setForm} onSave={() => addAppointment(form, activeMember)} refresh={refresh} setError={setError} logs={logs.appointments} empty="Belum ada appointment." fields={<><Field label="Title" required value={form.title} onChange={(v) => setForm({ ...form, title: v })} /><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} /><Text label="Reason" value={form.reason} onChange={(v) => setForm({ ...form, reason: v })} /><Text label="Questions to ask doctor" value={form.questions} onChange={(v) => setForm({ ...form, questions: v })} /><Text label="Notes after appointment" value={form.after_notes} onChange={(v) => setForm({ ...form, after_notes: v })} /></>} render={(row) => <BasicLog title={row.title} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} />} />;
+function AppointmentsScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
+  const initialForm = { title: '', date: initialDate, time: '', location: '', reason: '', questions: '', after_notes: '' };
+  const [form, setForm] = useState(initialForm);
+  return <SimpleForm title="Appointments" subtitle="Doctor visits and questions." form={form} setForm={setForm} initialForm={initialForm} onSave={() => addAppointment(form, activeMember)} onUpdate={(id) => updateAppointment(id, form)} onDelete={deleteAppointment} toForm={(row) => ({ title: row.title ?? '', date: row.date ?? today(), time: row.time ?? '', location: row.location ?? '', reason: row.reason ?? '', questions: row.questions ?? '', after_notes: row.after_notes ?? '' })} refresh={refresh} setError={setError} logs={logs.appointments} empty="Belum ada appointment." fields={<><Field label="Title" required value={form.title} onChange={(v) => setForm({ ...form, title: v })} /><div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Field label="Time" type="time" value={form.time} onChange={(v) => setForm({ ...form, time: v })} /></div><Field label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} /><Text label="Reason" value={form.reason} onChange={(v) => setForm({ ...form, reason: v })} /><Text label="Questions to ask doctor" value={form.questions} onChange={(v) => setForm({ ...form, questions: v })} /><Text label="Notes after appointment" value={form.after_notes} onChange={(v) => setForm({ ...form, after_notes: v })} /></>} render={(row, actions) => <BasicLog title={row.title} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} {...actions} />} />;
 }
 
-function SimpleForm({ title, subtitle, fields, onSave, refresh, setError, logs, empty, render }) {
+function SimpleForm({ title, subtitle, fields, onSave, onUpdate, onDelete, toForm, initialForm, form, setForm, refresh, setError, logs, empty, render }) {
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  function startEdit(row) {
+    if (!toForm) return;
+    setEditingId(row.id);
+    setForm(toForm(row));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function cancelEdit() {
+    setEditingId(null);
+    if (initialForm) setForm(initialForm);
+  }
+  async function removeRow(row) {
+    if (!onDelete || !window.confirm('Delete this log?')) return;
+    setError('');
+    try {
+      await onDelete(row.id);
+      if (editingId === row.id) cancelEdit();
+      await refresh();
+    } catch (err) { setError(err.message); }
+  }
   async function submit(event) {
     event.preventDefault();
     setSaving(true); setError('');
-    try { await onSave(); await refresh(); } catch (err) { setError(err.message); } finally { setSaving(false); }
+    try {
+      if (editingId && onUpdate) await onUpdate(editingId);
+      else await onSave();
+      cancelEdit();
+      await refresh();
+    } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
-  return <Screen title={title} subtitle={subtitle}><form className="card form stack" onSubmit={submit}>{fields}<button className="primary save" disabled={saving}><Save size={20} />{saving ? 'Saving...' : 'Save'}</button></form><LogList rows={logs} empty={empty} render={render} /></Screen>;
+  return <Screen title={title} subtitle={subtitle}><form className="card form stack" onSubmit={submit}>{fields}<button className="primary save" disabled={saving}><Save size={20} />{saving ? 'Saving...' : editingId ? 'Update' : 'Save'}</button>{editingId && <button className="secondary-action" type="button" onClick={cancelEdit}>Cancel edit</button>}</form><LogList rows={logs} empty={empty} render={(row) => render(row, onUpdate || onDelete ? { onEdit: () => startEdit(row), onDelete: () => removeRow(row) } : {})} /></Screen>;
 }
 
-function SummaryScreen({ logs }) {
-  const from = new Date(); from.setDate(from.getDate() - 6);
-  const in7 = (row) => new Date(`${row.date}T00:00:00`) >= from;
-  const meals7 = logs.meals.filter(in7);
-  const meds7 = logs.medicines.filter(in7);
-  const bowel7 = logs.bowels.filter(in7);
-  return <Screen title="Summary" subtitle="Last 7 days, screenshot-friendly."><div className="summary-grid"><Stat label="Weight logs" value={logs.weights.filter(in7).length} /><Stat label="Meals logged" value={meals7.length} /><Stat label="Meals refused" value={meals7.filter((m) => m.food_amount_eaten === 'Refused').length} /><Stat label="Medicine taken" value={meds7.filter((m) => m.status === 'Taken').length} /><Stat label="Medicine missed" value={meds7.filter((m) => m.status === 'Missed').length} /><Stat label="Bowel yes" value={bowel7.filter((b) => b.status === 'Yes').length} /></div><LogList rows={logs.appointments.filter((a) => a.date >= today())} empty="Belum ada appointment akan datang." render={(row) => <BasicLog title={row.title} meta={`${moneyDate(row.date)} ${row.time || ''}`} row={row} />} /></Screen>;
+function LogsReviewScreen({ setScreen, setFormDate }) {
+  const [selectedDate, setSelectedDate] = useState(today());
+  const [dayLogs, setDayLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], appointments: [] });
+  const [loadingDay, setLoadingDay] = useState(false);
+  const [dayError, setDayError] = useState('');
+
+  async function loadDay(date) {
+    setLoadingDay(true);
+    setDayError('');
+    try {
+      setDayLogs(await getLogsForDate(date));
+    } catch (err) {
+      setDayError(err.message || 'Tidak dapat load log.');
+    } finally {
+      setLoadingDay(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDay(selectedDate);
+  }, [selectedDate]);
+
+  function addForDate(nextScreen) {
+    setFormDate(selectedDate);
+    setScreen(nextScreen);
+  }
+
+  const notes = [
+    ...dayLogs.weights.map((row) => row.notes),
+    ...dayLogs.medicines.map((row) => row.notes),
+    ...dayLogs.bowels.map((row) => row.notes),
+    ...dayLogs.appointments.map((row) => row.after_notes),
+    ...dayLogs.meals.map((row) => row.after_notes || row.before_notes),
+  ].filter(Boolean);
+
+  return (
+    <div className="logs-review-page">
+      <Screen title="Logs" subtitle={`Review logs for ${formatReviewDateLong(selectedDate)}.`}>
+        {dayError && <p className="error">{dayError}</p>}
+        {loadingDay && <p className="muted">Loading selected date...</p>}
+        <ReviewSection title="Meals" button="Add Meal for this date" onAdd={() => addForDate('meal')}>
+          {orderedMeals(dayLogs.meals).length ? orderedMeals(dayLogs.meals).map((meal) => <ReviewMeal key={meal.id} meal={meal} />) : <Empty text="Belum ada meal log untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Weight" button="Add Weight for this date" onAdd={() => addForDate('weight')}>
+          {dayLogs.weights.length ? dayLogs.weights.map((row) => <ReviewItem key={row.id} title={`${row.weight_kg} kg`} lines={[row.time, row.notes, `Logged by ${row.created_by_name || '-'}`]} />) : <Empty text="Belum ada berat direkod untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Medicine" button="Add Medicine for this date" onAdd={() => addForDate('meds')}>
+          {dayLogs.medicines.length ? dayLogs.medicines.map((row) => <ReviewItem key={row.id} title={`${row.medicine_name} - ${row.status}`} lines={[row.time, row.dosage, row.notes, `Logged by ${row.created_by_name || '-'}`]} />) : <Empty text="Belum ada medicine log untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Toilet Log" button="Add Toilet Log for this date" onAdd={() => addForDate('bowel')}>
+          {dayLogs.bowels.length ? dayLogs.bowels.map((row) => <ReviewItem key={row.id} title={`Poop: ${row.status}`} lines={[`Pee status: -`, `Pee frequency: -`, `Poop type: ${row.type || '-'}`, row.notes, `Logged by ${row.created_by_name || '-'}`]} />) : <Empty text="Belum ada toilet log untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Appointments" button="Add Appointment for this date" onAdd={() => addForDate('appointments')}>
+          {dayLogs.appointments.length ? dayLogs.appointments.map((row) => <ReviewItem key={row.id} title={row.title} lines={[row.time, row.location, row.reason, row.after_notes]} />) : <Empty text="Tiada appointment untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Notes / Observations">
+          {notes.length ? notes.map((note, index) => <p className="note-line" key={`${note}-${index}`}>{note}</p>) : <Empty text="Tiada notes untuk tarikh ini." />}
+        </ReviewSection>
+      </Screen>
+      <DateReviewBar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+    </div>
+  );
+}
+
+function ReviewSection({ title, button, onAdd, children }) {
+  return <section className="review-section"><div className="review-section-head"><h3>{title}</h3>{button && <button onClick={onAdd}>{button}</button>}</div><div className="stack">{children}</div></section>;
+}
+
+function ReviewMeal({ meal }) {
+  return (
+    <article className="review-card">
+      <div className="review-card-head"><strong>{meal.meal_type}</strong><small>Logged by {meal.created_by_name || '-'}</small></div>
+      <div className="review-photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>
+      {meal.food_details && <p><b>Food:</b> {meal.food_details}</p>}
+      {meal.food_amount_eaten && <p><b>Eaten:</b> {meal.food_amount_eaten}</p>}
+      {meal.drink_amount_finished && <p><b>Drink:</b> {meal.drink_amount_finished}</p>}
+      {meal.issues?.length ? <p><b>Issues:</b> {meal.issues.join(', ')}</p> : null}
+    </article>
+  );
+}
+
+function ReviewItem({ title, lines }) {
+  return <article className="review-card"><strong>{title}</strong>{lines.filter(Boolean).map((line, index) => <p key={`${line}-${index}`}>{line}</p>)}</article>;
+}
+
+function DateReviewBar({ selectedDate, setSelectedDate }) {
+  return (
+    <div className="date-review-bar">
+      <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} aria-label="Previous day">&lt;</button>
+      <strong>{formatReviewDate(selectedDate)}</strong>
+      <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} aria-label="Next day">&gt;</button>
+      <label className="calendar-button" aria-label="Pick date">Cal<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
+      <button onClick={() => setSelectedDate(today())}>Today</button>
+    </div>
+  );
+}
+
+function orderedMeals(meals) {
+  const order = ['Breakfast', 'Morning Snack', 'Lunch', 'Evening Snack', 'Dinner', 'Supper'];
+  return [...meals].sort((a, b) => order.indexOf(a.meal_type) - order.indexOf(b.meal_type));
+}
+
+function addDays(date, amount) {
+  const next = new Date(`${date}T00:00:00`);
+  next.setDate(next.getDate() + amount);
+  return next.toISOString().slice(0, 10);
+}
+
+function formatReviewDate(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function formatReviewDateLong(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function MoreScreen({ setScreen }) {
+  return (
+    <Screen title="More" subtitle="Extra tools for family care.">
+      <div className="stack">
+        <button className="tool-row" onClick={() => setScreen('report')}>
+          <span><FileText size={22} /></span>
+          <div>
+            <strong>Weekly Report</strong>
+            <small>Doctor meal report, printable PDF style</small>
+          </div>
+        </button>
+        <button className="tool-row" onClick={() => setScreen('report')}>
+          <span><Printer size={22} /></span>
+          <div>
+            <strong>Doctor Report</strong>
+            <small>Same report, ready to print</small>
+          </div>
+        </button>
+      </div>
+    </Screen>
+  );
+}
+
+function WeeklyReportScreen({ logs }) {
+  const [startDate, setStartDate] = useState(today());
+  const [length, setLength] = useState(7);
+  const [extraNotes, setExtraNotes] = useState('');
+  const [dayComments, setDayComments] = useState({});
+  const days = useMemo(() => Array.from({ length }, (_, index) => {
+    const date = new Date(`${startDate}T00:00:00`);
+    date.setDate(date.getDate() + index);
+    return date.toISOString().slice(0, 10);
+  }), [startDate, length]);
+  const pages = length === 7 ? [days.slice(0, 4), days.slice(4)] : [days];
+  const endDate = days[days.length - 1] ?? startDate;
+  const mealsInRange = logs.meals.filter((meal) => days.includes(meal.date));
+
+  return (
+    <Screen title="Weekly Report" subtitle="Printable meal report for doctor visit.">
+      <section className="card form stack no-print">
+        <div className="grid two">
+          <Field label="Start date" type="date" value={startDate} onChange={setStartDate} />
+          <Select label="Report length" value={String(length)} options={['4', '7']} onChange={(value) => setLength(Number(value))} />
+        </div>
+        <Text label="Extra notes for doctor" value={extraNotes} onChange={setExtraNotes} />
+        <button className="primary save" type="button" onClick={() => window.print()}>
+          <Printer size={20} /> Print / Save PDF
+        </button>
+      </section>
+      <div className="report-preview">
+        {pages.map((pageDays, index) => (
+          <ReportPage
+            key={pageDays.join('-')}
+            pageDays={pageDays}
+            pageNumber={index + 1}
+            pageCount={pages.length}
+            startDate={startDate}
+            endDate={endDate}
+            meals={mealsInRange}
+            extraNotes={extraNotes}
+            dayComments={dayComments}
+            setDayComments={setDayComments}
+          />
+        ))}
+      </div>
+    </Screen>
+  );
+}
+
+function ReportPage({ pageDays, pageNumber, pageCount, startDate, endDate, meals, extraNotes, dayComments, setDayComments }) {
+  const rows = [
+    ['Breakfast', 'Breakfast'],
+    ['Morning Tea', 'Morning Snack'],
+    ['Lunch', 'Lunch'],
+    ['Evening Tea', 'Evening Snack'],
+    ['Dinner', 'Dinner'],
+    ['Supper', 'Supper'],
+  ];
+  return (
+    <article className="report-page">
+      <div className="report-head">
+        <div>
+          <h2>Meal Plan for: Nuha</h2>
+          <p>Date: {formatReportDate(startDate)} to {formatReportDate(endDate)}</p>
+        </div>
+        {pageCount > 1 && <span>Page {pageNumber} / {pageCount}</span>}
+      </div>
+      <table className="doctor-table">
+        <thead>
+          <tr>
+            <th>Meal</th>
+            {pageDays.map((day, index) => <th key={day}>Day {((pageNumber - 1) * 4) + index + 1}<br /><small>{formatReportDate(day)}</small></th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([label, mealType]) => (
+            <tr key={label}>
+              <th>{label}</th>
+              {pageDays.map((day) => <td key={`${day}-${mealType}`}>{mealSummary(findMeal(meals, day, mealType))}</td>)}
+            </tr>
+          ))}
+          <tr>
+            <th>Comment</th>
+            {pageDays.map((day) => (
+              <td key={`${day}-comment`} className="comment-cell">
+                <textarea
+                  value={dayComments[day] ?? ''}
+                  onChange={(event) => setDayComments({ ...dayComments, [day]: event.target.value })}
+                  placeholder="Write comment"
+                />
+                <div className="print-comment">{dayComments[day] || '-'}</div>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+      <div className="doctor-notes">
+        <strong>Notes</strong>
+        <p>{extraNotes || ''}</p>
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </article>
+  );
+}
+
+function findMeal(meals, date, mealType) {
+  return meals.find((meal) => meal.date === date && meal.meal_type === mealType);
+}
+
+function mealSummary(meal) {
+  if (!meal) return '-';
+  const parts = [
+    meal.food_details ? `Food: ${shortText(meal.food_details, 42)}` : '',
+    meal.drink_details ? `Drink: ${shortText(meal.drink_details, 36)}` : '',
+  ].filter(Boolean);
+  return parts.length ? parts.join('\n') : '-';
+}
+
+function shortText(text, max) {
+  if (!text) return '';
+  return text.length > max ? `${text.slice(0, max - 1)}...` : text;
+}
+
+function formatReportDate(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function SettingsScreen({ members, activeMember, onSelect, onAdded, onLogout }) {
@@ -321,7 +657,7 @@ function Shell({ children, active, setScreen }) {
   return <div className="app-shell"><main className="app-main">{children}</main>{setScreen && <BottomNav active={active} setScreen={setScreen} />}</div>;
 }
 function BottomNav({ active, setScreen }) {
-  const items = [['home', 'Home', <Home size={22} />], ['summary', 'Logs', <History size={22} />], ['meal', 'Meals', <Utensils size={22} />], ['meds', 'Meds', <Pill size={22} />], ['appointments', 'Appts', <CalendarDays size={22} />]];
+  const items = [['home', 'Home', <Home size={22} />], ['summary', 'Logs', <History size={22} />], ['meal', 'Meals', <Utensils size={22} />], ['meds', 'Meds', <Pill size={22} />], ['more', 'More', <MoreHorizontal size={22} />]];
   return <nav className="bottom-nav">{items.map(([id, label, icon]) => <button key={id} className={active === id ? 'active' : ''} onClick={() => setScreen(id)}>{icon}<span>{label}</span></button>)}</nav>;
 }
 function Screen({ title, subtitle, children }) { return <><section className="intro"><h2>{title}</h2><p>{subtitle}</p></section>{children}</>; }
@@ -329,8 +665,12 @@ function Card({ title, icon, tone, action, children }) { return <article classNa
 function Notice({ title, text }) { return <div className="card notice"><h1>{title}</h1><p>{text}</p></div>; }
 function Empty({ text }) { return <p className="muted">{text}</p>; }
 function Stat({ label, value }) { return <div className="card stat"><span>{label}</span><strong>{value}</strong></div>; }
-function BasicLog({ title, meta, row }) { return <div className="log-card"><strong>{title}</strong><span>{meta}</span><small>Created by {row.created_by_name || '-'}</small>{row.notes && <p>{row.notes}</p>}</div>; }
-function MealCard({ meal }) { return <div className="log-card meal-card"><strong>{meal.meal_type}</strong><span>{moneyDate(meal.date)} - {meal.food_amount_eaten || 'No after amount'}</span><small>Drink: {meal.drink_amount_finished || '-'} | Created by {meal.created_by_name || '-'}</small><div className="photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>{meal.food_details && <p>{meal.food_details}</p>}</div>; }
+function BasicLog({ title, meta, row, onEdit, onDelete }) { return <div className="log-card"><strong>{title}</strong><span>{meta}</span><small>Created by {row.created_by_name || '-'}</small>{row.notes && <p>{row.notes}</p>}<LogActions onEdit={onEdit} onDelete={onDelete} /></div>; }
+function MealCard({ meal, onEdit, onDelete }) { return <div className="log-card meal-card"><strong>{meal.meal_type}</strong><span>{moneyDate(meal.date)} - {meal.food_amount_eaten || 'No after amount'}</span><small>Drink: {meal.drink_amount_finished || '-'} | Created by {meal.created_by_name || '-'}</small><div className="photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>{meal.food_details && <p>{meal.food_details}</p>}<LogActions onEdit={onEdit} onDelete={onDelete} /></div>; }
+function LogActions({ onEdit, onDelete }) {
+  if (!onEdit && !onDelete) return null;
+  return <div className="log-actions">{onEdit && <button type="button" onClick={onEdit}>Edit</button>}{onDelete && <button type="button" className="delete" onClick={onDelete}>Delete</button>}</div>;
+}
 function LogList({ rows, empty, render }) { return <section className="stack list">{rows.length ? rows.map((row) => <React.Fragment key={row.id}>{render(row)}</React.Fragment>) : <div className="card"><Empty text={empty} /></div>}</section>; }
 function Field({ label, onChange, ...props }) { return <label>{label}<input {...props} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Text({ label, value, onChange }) { return <label>{label}<textarea value={value} onChange={(e) => onChange(e.target.value)} rows="3" /></label>; }
