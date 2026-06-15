@@ -30,6 +30,6 @@ npm run dev
 - Local storage only keeps the verified family-code flag and active family member.
 - Logs and meal photo URLs are saved in Supabase.
 - The `meal-photos` bucket is public so meal photos can display directly in cards.
-- More > Weekly Report opens an A4 print-friendly doctor meal report from saved `meal_logs`.
+- More > Weekly Report opens an A4 doctor meal report from saved `meal_logs`, with start/end date range, image save/share, direct PDF download, and browser print fallback.
 - Meal, weight, medicine, and appointment logs can be edited or deleted from their log lists.
 - Logs tab has a selected-date review page with previous/next/calendar/today controls and add buttons that prefill the chosen date.

@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   CalendarDays,
   Home,
@@ -40,10 +43,18 @@ import { isSupabaseConfigured } from './supabase';
 import './styles.css';
 
 const familyCode = import.meta.env.VITE_FAMILY_ACCESS_CODE ?? 'NUHA2026';
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => dateInputValue(new Date());
 const nowTime = () => new Date().toTimeString().slice(0, 5);
 const sameDay = (row, date = today()) => row.date === date;
 const moneyDate = (date) => new Date(`${date}T00:00:00`).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' });
+const REPORT_ROWS = [
+  ['Breakfast', 'Breakfast'],
+  ['Morning Tea', 'Morning Snack'],
+  ['Lunch', 'Lunch'],
+  ['Evening Tea', 'Evening Snack'],
+  ['Dinner', 'Dinner'],
+  ['Supper', 'Supper'],
+];
 
 function App() {
   const [hasAccess, setHasAccess] = useState(() => localStorage.getItem('nuha-family-access') === 'yes');
@@ -483,7 +494,37 @@ function orderedMeals(meals) {
 function addDays(date, amount) {
   const next = new Date(`${date}T00:00:00`);
   next.setDate(next.getDate() + amount);
-  return next.toISOString().slice(0, 10);
+  return dateInputValue(next);
+}
+
+function datesBetween(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [today()];
+  const first = start <= end ? start : end;
+  const last = start <= end ? end : start;
+  const days = [];
+  const cursor = new Date(first);
+  while (cursor <= last) {
+    days.push(dateInputValue(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+}
+
+function dateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function chunkDays(days, size) {
+  const chunks = [];
+  for (let index = 0; index < days.length; index += size) {
+    chunks.push(days.slice(index, index + size));
+  }
+  return chunks.length ? chunks : [[today()]];
 }
 
 function formatReviewDate(date) {
@@ -519,16 +560,11 @@ function MoreScreen({ setScreen }) {
 
 function WeeklyReportScreen({ logs }) {
   const [startDate, setStartDate] = useState(today());
-  const [length, setLength] = useState(7);
+  const [endDate, setEndDate] = useState(addDays(today(), 6));
   const [extraNotes, setExtraNotes] = useState('');
   const [dayComments, setDayComments] = useState({});
-  const days = useMemo(() => Array.from({ length }, (_, index) => {
-    const date = new Date(`${startDate}T00:00:00`);
-    date.setDate(date.getDate() + index);
-    return date.toISOString().slice(0, 10);
-  }), [startDate, length]);
-  const pages = length === 7 ? [days.slice(0, 4), days.slice(4)] : [days];
-  const endDate = days[days.length - 1] ?? startDate;
+  const days = useMemo(() => datesBetween(startDate, endDate), [startDate, endDate]);
+  const pages = useMemo(() => chunkDays(days, 4), [days]);
   const mealsInRange = logs.meals.filter((meal) => days.includes(meal.date));
 
   return (
@@ -536,12 +572,20 @@ function WeeklyReportScreen({ logs }) {
       <section className="card form stack no-print">
         <div className="grid two">
           <Field label="Start date" type="date" value={startDate} onChange={setStartDate} />
-          <Select label="Report length" value={String(length)} options={['4', '7']} onChange={(value) => setLength(Number(value))} />
+          <Field label="End date" type="date" value={endDate} onChange={setEndDate} />
         </div>
         <Text label="Extra notes for doctor" value={extraNotes} onChange={setExtraNotes} />
-        <button className="primary save" type="button" onClick={() => window.print()}>
-          <Printer size={20} /> Print / Save PDF
-        </button>
+        <div className="report-actions">
+          <button className="secondary-action" type="button" onClick={() => saveReportImage(startDate, endDate)}>
+            <FileText size={20} /> Save Image
+          </button>
+          <button className="primary save" type="button" onClick={() => downloadDoctorPdf({ pages, startDate, endDate, meals: mealsInRange, dayComments, extraNotes })}>
+            <FileText size={20} /> Download PDF
+          </button>
+          <button className="secondary-action" type="button" onClick={() => window.print()}>
+            <Printer size={20} /> Print
+          </button>
+        </div>
       </section>
       <div className="report-preview">
         {pages.map((pageDays, index) => (
@@ -564,14 +608,6 @@ function WeeklyReportScreen({ logs }) {
 }
 
 function ReportPage({ pageDays, pageNumber, pageCount, startDate, endDate, meals, extraNotes, dayComments, setDayComments }) {
-  const rows = [
-    ['Breakfast', 'Breakfast'],
-    ['Morning Tea', 'Morning Snack'],
-    ['Lunch', 'Lunch'],
-    ['Evening Tea', 'Evening Snack'],
-    ['Dinner', 'Dinner'],
-    ['Supper', 'Supper'],
-  ];
   return (
     <article className="report-page">
       <div className="report-head">
@@ -589,7 +625,7 @@ function ReportPage({ pageDays, pageNumber, pageCount, startDate, endDate, meals
           </tr>
         </thead>
         <tbody>
-          {rows.map(([label, mealType]) => (
+          {REPORT_ROWS.map(([label, mealType]) => (
             <tr key={label}>
               <th>{label}</th>
               {pageDays.map((day) => <td key={`${day}-${mealType}`}>{mealSummary(findMeal(meals, day, mealType))}</td>)}
@@ -617,6 +653,100 @@ function ReportPage({ pageDays, pageNumber, pageCount, startDate, endDate, meals
       </div>
     </article>
   );
+}
+
+function downloadDoctorPdf({ pages, startDate, endDate, meals, dayComments, extraNotes }) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  pages.forEach((pageDays, pageIndex) => {
+    if (pageIndex > 0) doc.addPage();
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Meal Plan for: Nuha', 14, 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Date: ${formatReportDate(startDate)} to ${formatReportDate(endDate)}`, 14, 22);
+    if (pages.length > 1) doc.text(`Page ${pageIndex + 1} / ${pages.length}`, pageWidth - 34, 22);
+
+    const head = [['Meal', ...pageDays.map((day, index) => `Day ${pageIndex * 4 + index + 1}\n${formatReportDate(day)}`)]];
+    const body = [
+      ...REPORT_ROWS.map(([label, mealType]) => [
+        label,
+        ...pageDays.map((day) => mealSummary(findMeal(meals, day, mealType))),
+      ]),
+      ['Comment', ...pageDays.map((day) => dayComments[day] || '-')],
+    ];
+
+    autoTable(doc, {
+      head,
+      body,
+      startY: 29,
+      theme: 'grid',
+      styles: {
+        textColor: 0,
+        lineColor: 0,
+        lineWidth: 0.2,
+        fontSize: 8,
+        cellPadding: 2,
+        valign: 'top',
+      },
+      headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 25, fontStyle: 'bold' } },
+      bodyStyles: { minCellHeight: 20 },
+      margin: { left: 10, right: 10 },
+    });
+
+    const notesTop = doc.lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Notes', 14, notesTop);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    if (extraNotes) {
+      doc.text(doc.splitTextToSize(extraNotes, 180), 14, notesTop + 7);
+    }
+    for (let index = 0; index < 4; index += 1) {
+      const y = notesTop + 12 + index * 8;
+      doc.line(14, y, 196, y);
+    }
+  });
+  doc.save(`nuha-doctor-report-${startDate}-to-${endDate}.pdf`);
+}
+
+async function saveReportImage(startDate, endDate) {
+  const report = document.querySelector('.report-preview');
+  if (!report) return;
+  const canvas = await html2canvas(report, {
+    backgroundColor: '#ffffff',
+    scale: Math.min(window.devicePixelRatio || 2, 2),
+    useCORS: true,
+  });
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
+  if (!blob) return;
+  const fileName = `nuha-doctor-report-${startDate}-to-${endDate}.png`;
+  if (typeof File === 'function' && navigator.share) {
+    const file = new File([blob], fileName, { type: 'image/png' });
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Nuha Doctor Report',
+        text: 'Nuha doctor report image',
+      });
+      return;
+    } catch {
+      // Fall back to normal browser download below.
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function findMeal(meals, date, mealType) {
@@ -672,7 +802,10 @@ function LogActions({ onEdit, onDelete }) {
   return <div className="log-actions">{onEdit && <button type="button" onClick={onEdit}>Edit</button>}{onDelete && <button type="button" className="delete" onClick={onDelete}>Delete</button>}</div>;
 }
 function LogList({ rows, empty, render }) { return <section className="stack list">{rows.length ? rows.map((row) => <React.Fragment key={row.id}>{render(row)}</React.Fragment>) : <div className="card"><Empty text={empty} /></div>}</section>; }
-function Field({ label, onChange, ...props }) { return <label>{label}<input {...props} onChange={(e) => onChange(e.target.value)} /></label>; }
+function Field({ label, onChange, ...props }) {
+  const handleChange = (event) => onChange(event.target.value);
+  return <label>{label}<input {...props} onChange={handleChange} onInput={handleChange} /></label>;
+}
 function Text({ label, value, onChange }) { return <label>{label}<textarea value={value} onChange={(e) => onChange(e.target.value)} rows="3" /></label>; }
 function Select({ label, value, options, onChange }) { return <label>{label}<select value={value} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
 function File({ label, onChange }) { return <label>{label}<input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0] ?? null)} /></label>; }

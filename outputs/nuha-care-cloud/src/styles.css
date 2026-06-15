@@ -116,6 +116,7 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(85,97,88,
 .tool-row strong, .tool-row small { display: block; }
 .tool-row small { color: var(--muted); margin-top: 4px; }
 .report-preview { display: grid; gap: 22px; margin-top: 18px; overflow-x: auto; padding-bottom: 8px; }
+.report-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .report-page { width: min(100%, 794px); min-height: 1123px; margin: 0 auto; background: #fff; color: #000; border: 1px solid #ddd; box-shadow: 0 18px 40px rgba(0,0,0,.12); padding: 34px; font-family: Arial, sans-serif; }
 .report-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
 .report-head h2 { margin: 0 0 6px; font-size: 20px; color: #000; }
@@ -144,6 +145,7 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(85,97,88,
   .date-review-bar { left: 8px; right: 8px; grid-template-columns: 40px 1fr 40px 52px 62px; }
   .date-review-bar strong { font-size: 15px; }
   .review-section-head { align-items: flex-start; flex-direction: column; }
+  .report-actions { grid-template-columns: 1fr; }
 }
 
 @page {
