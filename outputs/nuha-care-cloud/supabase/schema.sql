@@ -25,6 +25,7 @@ create table if not exists meal_logs (
   meal_type text not null,
   time_served text,
   food_details text,
+  additional_food text,
   food_amount_served text,
   drink_details text,
   drink_amount_served text,
@@ -96,6 +97,8 @@ create table if not exists appointments (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table meal_logs add column if not exists additional_food text;
 
 alter table family_members enable row level security;
 alter table weight_logs enable row level security;

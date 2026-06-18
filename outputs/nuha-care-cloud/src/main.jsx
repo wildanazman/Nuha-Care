@@ -264,12 +264,40 @@ function HomeScreen({ logs, activeMember, setScreen }) {
   );
 }
 
+const SNACK_MEAL_TYPES = ['Morning Snack', 'Evening Snack'];
+const FOOD_MAIN_OPTIONS = [
+  'Char kuey teow', 'Maggi goreng', 'Mee goreng', 'Bi hun goreng', 'Nasi ayam kari',
+  'Nasi ayam kuning', 'Nasi ayam kicap', 'Spaghetti bolognese', 'Spaghetti carbonara',
+  'Buttermilk chicken', 'Cereal', 'Maggi sup', 'Nasi goreng', 'Mi kari',
+];
+const FOOD_SNACK_OPTIONS = ['Ice cream'];
+const FOOD_ADDITIONAL_OPTIONS = ['Telur mata', 'Telur dadar', 'Telur rebus', 'Telur separuh masak'];
+const DRINK_OPTIONS = [
+  'Orange juice', 'Sunquick', 'Ribena', 'Soya', 'Teh', 'Fanta strawberi',
+  'F&N strawberi', 'Sirap bandung', 'Sirap', 'Apple juice',
+];
+function foodOptions(mealType) {
+  return SNACK_MEAL_TYPES.includes(mealType) ? FOOD_SNACK_OPTIONS : FOOD_MAIN_OPTIONS;
+}
+function mergeOptions(presets, learned) {
+  const seen = new Set(presets.map((item) => item.toLowerCase()));
+  const extra = [];
+  for (const raw of learned) {
+    const value = (raw ?? '').trim();
+    if (value && !seen.has(value.toLowerCase())) {
+      seen.add(value.toLowerCase());
+      extra.push(value);
+    }
+  }
+  return [...extra, ...presets];
+}
+
 function MealsScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const emptyMealForm = {
     date: initialDate, meal_type: 'Breakfast', time_served: nowTime(), food_details: '',
-    food_amount_served: '', drink_details: '', drink_amount_served: '', before_notes: '',
+    additional_food: '', drink_details: '', before_notes: '',
     time_finished: '', food_amount_eaten: 'Finished all', drink_amount_finished: 'Finished all',
     feeding_method: 'Self', issues: [], after_notes: '', beforePhotoFile: null, afterPhotoFile: null,
   };
@@ -281,9 +309,8 @@ function MealsScreen({ logs, activeMember, refresh, setError, initialDate = toda
       meal_type: meal.meal_type ?? 'Breakfast',
       time_served: meal.time_served ?? '',
       food_details: meal.food_details ?? '',
-      food_amount_served: meal.food_amount_served ?? '',
+      additional_food: meal.additional_food ?? '',
       drink_details: meal.drink_details ?? '',
-      drink_amount_served: meal.drink_amount_served ?? '',
       before_notes: meal.before_notes ?? '',
       time_finished: meal.time_finished ?? '',
       food_amount_eaten: meal.food_amount_eaten ?? 'Finished all',
@@ -319,14 +346,21 @@ function MealsScreen({ logs, activeMember, refresh, setError, initialDate = toda
       await refresh();
     } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
+  const isSnackType = SNACK_MEAL_TYPES.includes(form.meal_type);
+  const learnedFood = logs.meals.filter((m) => SNACK_MEAL_TYPES.includes(m.meal_type) === isSnackType).map((m) => m.food_details);
+  const foodOpts = mergeOptions(foodOptions(form.meal_type), learnedFood);
+  const additionalOpts = mergeOptions(FOOD_ADDITIONAL_OPTIONS, logs.meals.map((m) => m.additional_food));
+  const drinkOpts = mergeOptions(DRINK_OPTIONS, logs.meals.map((m) => m.drink_details));
+  const todayMeals = logs.meals.filter((m) => sameDay(m));
   return (
-    <Screen title="Meals" subtitle="Before and after tracking.">
+    <Screen title="Meals" subtitle="Log makan hari ini. Tarikh lain pergi tab Logs.">
       <form className="form stack" onSubmit={submit}>
         <SectionTitle number="1" title="Before Meal" />
         <div className="grid two"><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><Select label="Meal Type" value={form.meal_type} options={['Breakfast', 'Morning Snack', 'Lunch', 'Evening Snack', 'Dinner', 'Supper']} onChange={(v) => setForm({ ...form, meal_type: v })} /></div>
-        <div className="grid two"><Field label="Time served" type="time" value={form.time_served} onChange={(v) => setForm({ ...form, time_served: v })} /><Field label="Food amount served" value={form.food_amount_served} onChange={(v) => setForm({ ...form, food_amount_served: v })} /></div>
-        <Text label="Food details" value={form.food_details} onChange={(v) => setForm({ ...form, food_details: v })} />
-        <div className="grid two"><Field label="Drink details" value={form.drink_details} onChange={(v) => setForm({ ...form, drink_details: v })} /><Field label="Drink amount served" value={form.drink_amount_served} onChange={(v) => setForm({ ...form, drink_amount_served: v })} /></div>
+        <Field label="Time served" type="time" value={form.time_served} onChange={(v) => setForm({ ...form, time_served: v })} />
+        <Combo label="Food details" value={form.food_details} options={foodOpts} onChange={(v) => setForm({ ...form, food_details: v })} />
+        <Combo label="Additional food / lauk" value={form.additional_food} options={additionalOpts} onChange={(v) => setForm({ ...form, additional_food: v })} />
+        <Combo label="Drink details" value={form.drink_details} options={drinkOpts} onChange={(v) => setForm({ ...form, drink_details: v })} />
         <File label="Before photo" onChange={(file) => setForm({ ...form, beforePhotoFile: file })} />
         <Text label="Before notes" value={form.before_notes} onChange={(v) => setForm({ ...form, before_notes: v })} />
         <SectionTitle number="2" title="After Meal" />
@@ -339,7 +373,8 @@ function MealsScreen({ logs, activeMember, refresh, setError, initialDate = toda
         <button className="primary save" disabled={saving}><Save size={20} />{saving ? 'Saving...' : editingId ? 'Update Meal Log' : 'Save Meal Log'}</button>
         {editingId && <button className="secondary-action" type="button" onClick={resetMealForm}>Cancel edit</button>}
       </form>
-      <LogList rows={logs.meals} empty="Belum ada meal log." render={(meal) => <MealCard meal={meal} onEdit={() => editMeal(meal)} onDelete={() => removeMeal(meal.id)} />} />
+      <h3 className="caps">Log hari ini</h3>
+      <LogList rows={todayMeals} empty="Belum ada meal log hari ini." render={(meal) => <MealCard meal={meal} onEdit={() => editMeal(meal)} onDelete={() => removeMeal(meal.id)} />} />
     </Screen>
   );
 }
@@ -561,7 +596,7 @@ function ReviewMeal({ meal }) {
     <article className="review-card">
       <div className="review-card-head"><strong>{meal.meal_type}</strong><small>Logged by {meal.created_by_name || '-'}</small></div>
       <div className="review-photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>
-      {meal.food_details && <p><b>Food:</b> {meal.food_details}</p>}
+      {foodWithAdditional(meal) && <p><b>Food:</b> {foodWithAdditional(meal)}</p>}
       {meal.food_amount_eaten && <p><b>Eaten:</b> {meal.food_amount_eaten}</p>}
       {meal.drink_amount_finished && <p><b>Drink:</b> {meal.drink_amount_finished}</p>}
       {meal.issues?.length ? <p><b>Issues:</b> {meal.issues.join(', ')}</p> : null}
@@ -859,10 +894,14 @@ function findMeal(meals, date, mealType) {
   return meals.find((meal) => meal.date === date && meal.meal_type === mealType);
 }
 
+function foodWithAdditional(meal) {
+  return [meal.food_details, meal.additional_food].map((v) => (v ?? '').trim()).filter(Boolean).join(' + ');
+}
 function mealSummary(meal) {
   if (!meal) return '-';
+  const food = foodWithAdditional(meal);
   const parts = [
-    meal.food_details ? `Food: ${shortText(meal.food_details, 42)}` : '',
+    food ? `Food: ${shortText(food, 46)}` : '',
     meal.drink_details ? `Drink: ${shortText(meal.drink_details, 36)}` : '',
   ].filter(Boolean);
   return parts.length ? parts.join('\n') : '-';
@@ -902,7 +941,7 @@ function Notice({ title, text }) { return <div className="card notice"><h1>{titl
 function Empty({ text }) { return <p className="muted">{text}</p>; }
 function Stat({ label, value }) { return <div className="card stat"><span>{label}</span><strong>{value}</strong></div>; }
 function BasicLog({ title, meta, row, onEdit, onDelete }) { return <div className="log-card"><strong>{title}</strong><span>{meta}</span><small>Created by {row.created_by_name || '-'}</small>{row.notes && <p>{row.notes}</p>}<LogActions onEdit={onEdit} onDelete={onDelete} /></div>; }
-function MealCard({ meal, onEdit, onDelete }) { return <div className="log-card meal-card"><strong>{meal.meal_type}</strong><span>{moneyDate(meal.date)} - {meal.food_amount_eaten || 'No after amount'}</span><small>Drink: {meal.drink_amount_finished || '-'} | Created by {meal.created_by_name || '-'}</small><div className="photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>{meal.food_details && <p>{meal.food_details}</p>}<LogActions onEdit={onEdit} onDelete={onDelete} /></div>; }
+function MealCard({ meal, onEdit, onDelete }) { return <div className="log-card meal-card"><strong>{meal.meal_type}</strong><span>{moneyDate(meal.date)} - {meal.food_amount_eaten || 'No after amount'}</span><small>Drink: {meal.drink_amount_finished || '-'} | Created by {meal.created_by_name || '-'}</small><div className="photos">{meal.before_photo_url && <img src={meal.before_photo_url} alt="Before meal" />}{meal.after_photo_url && <img src={meal.after_photo_url} alt="After meal" />}</div>{foodWithAdditional(meal) && <p>{foodWithAdditional(meal)}</p>}<LogActions onEdit={onEdit} onDelete={onDelete} /></div>; }
 function LogActions({ onEdit, onDelete }) {
   if (!onEdit && !onDelete) return null;
   return <div className="log-actions">{onEdit && <button type="button" onClick={onEdit}>Edit</button>}{onDelete && <button type="button" className="delete" onClick={onDelete}>Delete</button>}</div>;
@@ -914,6 +953,15 @@ function Field({ label, onChange, ...props }) {
 }
 function Text({ label, value, onChange }) { return <label>{label}<textarea value={value} onChange={(e) => onChange(e.target.value)} rows="3" /></label>; }
 function Select({ label, value, options, onChange }) { return <label>{label}<select value={value} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
+function Combo({ label, value, options, onChange }) {
+  const listId = `dl-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  return (
+    <label>{label}
+      <input list={listId} value={value} placeholder="Pilih atau taip sendiri" onChange={(e) => onChange(e.target.value)} />
+      <datalist id={listId}>{options.map((option) => <option key={option} value={option} />)}</datalist>
+    </label>
+  );
+}
 function File({ label, onChange }) {
   const [preview, setPreview] = useState('');
   const [name, setName] = useState('');
