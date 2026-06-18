@@ -367,7 +367,7 @@ function MealsScreen({ logs, activeMember, refresh, setError, initialDate = toda
         <SectionTitle number="2" title="After Meal" />
         <div className="grid two"><Field label="Time finished" type="time" value={form.time_finished} onChange={(v) => setForm({ ...form, time_finished: v })} /><Select label="Feeding method" value={form.feeding_method} options={['Self', 'Suap', 'Mixed']} onChange={(v) => setForm({ ...form, feeding_method: v })} /></div>
         <Select label="Food amount eaten" value={form.food_amount_eaten} options={['Finished all', 'More than half', 'Half', 'Less than half', 'Few bites', 'Refused']} onChange={(v) => setForm({ ...form, food_amount_eaten: v })} />
-        <Select label="Drink amount finished" value={form.drink_amount_finished} options={['Finished all', '1 cup', '1/2 cup', '1/4 cup', 'Few sips', 'Refused']} onChange={(v) => setForm({ ...form, drink_amount_finished: v })} />
+        <Select label="Drink amount finished" value={form.drink_amount_finished} options={['Finished all', '1 cup', '1/2 cup', '1/4 cup','3/4 cup', 'Few sips', 'Refused']} onChange={(v) => setForm({ ...form, drink_amount_finished: v })} />
         <File label="After photo" onChange={(file) => setForm({ ...form, afterPhotoFile: file })} />
         <Checklist label="Issues" values={form.issues} options={['No issue', 'Chewing difficulty', 'Swallowing difficulty', 'Spit out food', 'Coughing', 'Vomited', 'Refused', 'Took long time']} onChange={(issues) => setForm({ ...form, issues })} />
         <Text label="After notes" value={form.after_notes} onChange={(v) => setForm({ ...form, after_notes: v })} />
