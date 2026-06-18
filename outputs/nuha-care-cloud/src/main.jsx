@@ -20,6 +20,9 @@ import {
   MoreHorizontal,
   Printer,
   Droplet,
+  Camera,
+  ImagePlus,
+  X,
 } from 'lucide-react';
 import {
   addAppointment,
@@ -911,7 +914,42 @@ function Field({ label, onChange, ...props }) {
 }
 function Text({ label, value, onChange }) { return <label>{label}<textarea value={value} onChange={(e) => onChange(e.target.value)} rows="3" /></label>; }
 function Select({ label, value, options, onChange }) { return <label>{label}<select value={value} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
-function File({ label, onChange }) { return <label>{label}<input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0] ?? null)} /></label>; }
+function File({ label, onChange }) {
+  const [preview, setPreview] = useState('');
+  const [name, setName] = useState('');
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  function handle(file) {
+    onChange(file);
+    setName(file?.name || '');
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : '';
+    });
+  }
+  return (
+    <fieldset className="photo-field">
+      <legend>{label}</legend>
+      {preview ? (
+        <div className="photo-preview">
+          <img src={preview} alt="Selected" />
+          <button type="button" className="photo-clear" onClick={() => handle(null)} aria-label="Remove photo"><X size={18} /></button>
+        </div>
+      ) : (
+        <div className="photo-buttons">
+          <label className="photo-btn">
+            <Camera size={22} /><span>Camera</span>
+            <input type="file" accept="image/*" capture="environment" onChange={(e) => handle(e.target.files?.[0] ?? null)} />
+          </label>
+          <label className="photo-btn">
+            <ImagePlus size={22} /><span>Gallery</span>
+            <input type="file" accept="image/*" onChange={(e) => handle(e.target.files?.[0] ?? null)} />
+          </label>
+        </div>
+      )}
+      {!preview && name ? <small className="muted">{name}</small> : null}
+    </fieldset>
+  );
+}
 function Checklist({ label, values, options, onChange }) {
   return <fieldset><legend>{label}</legend><div className="check-grid">{options.map((option) => <label key={option} className="check"><input type="checkbox" checked={values.includes(option)} onChange={(e) => onChange(e.target.checked ? [...values, option] : values.filter((value) => value !== option))} />{option}</label>)}</div></fieldset>;
 }
