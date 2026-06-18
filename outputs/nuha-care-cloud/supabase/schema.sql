@@ -69,6 +69,19 @@ create table if not exists bowel_logs (
   updated_at timestamptz default now()
 );
 
+create table if not exists period_logs (
+  id uuid primary key default gen_random_uuid(),
+  date date not null,
+  end_date date,
+  flow text,
+  symptoms text[],
+  notes text,
+  created_by_member_id uuid,
+  created_by_name text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 create table if not exists appointments (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -89,6 +102,7 @@ alter table weight_logs enable row level security;
 alter table meal_logs enable row level security;
 alter table medicine_logs enable row level security;
 alter table bowel_logs enable row level security;
+alter table period_logs enable row level security;
 alter table appointments enable row level security;
 
 drop policy if exists "family members public family app access" on family_members;
@@ -96,6 +110,7 @@ drop policy if exists "weight logs public family app access" on weight_logs;
 drop policy if exists "meal logs public family app access" on meal_logs;
 drop policy if exists "medicine logs public family app access" on medicine_logs;
 drop policy if exists "bowel logs public family app access" on bowel_logs;
+drop policy if exists "period logs public family app access" on period_logs;
 drop policy if exists "appointments public family app access" on appointments;
 
 create policy "family members public family app access" on family_members for all using (true) with check (true);
@@ -103,6 +118,7 @@ create policy "weight logs public family app access" on weight_logs for all usin
 create policy "meal logs public family app access" on meal_logs for all using (true) with check (true);
 create policy "medicine logs public family app access" on medicine_logs for all using (true) with check (true);
 create policy "bowel logs public family app access" on bowel_logs for all using (true) with check (true);
+create policy "period logs public family app access" on period_logs for all using (true) with check (true);
 create policy "appointments public family app access" on appointments for all using (true) with check (true);
 
 insert into storage.buckets (id, name, public)

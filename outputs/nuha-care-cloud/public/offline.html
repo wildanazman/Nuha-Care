@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#556158" />
+    <title>Nuha Care - Offline</title>
+    <style>
+      :root { --bg: #fbfbe2; --green: #556158; --green-soft: #e8f5e9; --text: #1b1d0e; --muted: #59605a; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px;
+        background: var(--bg); color: var(--text); font-family: Quicksand, system-ui, sans-serif; text-align: center; }
+      .card { width: min(420px, 100%); background: #fff; border-radius: 32px; padding: 36px 28px;
+        box-shadow: 0 20px 35px rgba(85,97,88,.12); }
+      .mark { width: 88px; height: 88px; margin: 0 auto 20px; display: grid; place-items: center;
+        border-radius: 999px; background: var(--green-soft); }
+      .mark svg { width: 44px; height: 44px; }
+      h1 { margin: 0 0 10px; font-size: 22px; }
+      p { margin: 0 0 22px; color: var(--muted); line-height: 1.5; }
+      button { min-height: 52px; width: 100%; border: 0; border-radius: 18px; cursor: pointer;
+        background: var(--green); color: #fff; font-family: inherit; font-weight: 700; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#556158" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />
+        </svg>
+      </div>
+      <h1>Tiada sambungan internet</h1>
+      <p>Nuha Care perlu internet untuk sync data keluarga. Sambung semula WiFi atau data, kemudian cuba lagi.</p>
+      <button onclick="location.reload()">Cuba lagi</button>
+    </div>
+  </body>
+</html>

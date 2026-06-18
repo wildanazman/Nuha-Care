@@ -62,14 +62,15 @@ export async function ensureDefaultFamilyMembers() {
 
 export async function getLogs() {
   const client = requireSupabase();
-  const [weights, meals, medicines, bowels, appointments] = await Promise.all([
+  const [weights, meals, medicines, bowels, periods, appointments] = await Promise.all([
     client.from('weight_logs').select('*').order('date', orderByDateTime).order('created_at', orderByDateTime),
     client.from('meal_logs').select('*').order('date', orderByDateTime).order('created_at', orderByDateTime),
     client.from('medicine_logs').select('*').order('date', orderByDateTime).order('created_at', orderByDateTime),
     client.from('bowel_logs').select('*').order('date', orderByDateTime).order('created_at', orderByDateTime),
+    client.from('period_logs').select('*').order('date', orderByDateTime).order('created_at', orderByDateTime),
     client.from('appointments').select('*').order('date', { ascending: true }).order('time', { ascending: true }),
   ]);
-  const responses = [weights, meals, medicines, bowels, appointments];
+  const responses = [weights, meals, medicines, bowels, periods, appointments];
   const failed = responses.find((response) => response.error);
   if (failed) throw failed.error;
   return {
@@ -77,20 +78,22 @@ export async function getLogs() {
     meals: meals.data ?? [],
     medicines: medicines.data ?? [],
     bowels: bowels.data ?? [],
+    periods: periods.data ?? [],
     appointments: appointments.data ?? [],
   };
 }
 
 export async function getLogsForDate(date) {
   const client = requireSupabase();
-  const [weights, meals, medicines, bowels, appointments] = await Promise.all([
+  const [weights, meals, medicines, bowels, periods, appointments] = await Promise.all([
     client.from('weight_logs').select('*').eq('date', date).order('time', { ascending: true }).order('created_at', { ascending: true }),
     client.from('meal_logs').select('*').eq('date', date).order('created_at', { ascending: true }),
     client.from('medicine_logs').select('*').eq('date', date).order('time', { ascending: true }).order('created_at', { ascending: true }),
     client.from('bowel_logs').select('*').eq('date', date).order('created_at', { ascending: true }),
+    client.from('period_logs').select('*').eq('date', date).order('created_at', { ascending: true }),
     client.from('appointments').select('*').eq('date', date).order('time', { ascending: true }),
   ]);
-  const responses = [weights, meals, medicines, bowels, appointments];
+  const responses = [weights, meals, medicines, bowels, periods, appointments];
   const failed = responses.find((response) => response.error);
   if (failed) throw failed.error;
   return {
@@ -98,6 +101,7 @@ export async function getLogsForDate(date) {
     meals: meals.data ?? [],
     medicines: medicines.data ?? [],
     bowels: bowels.data ?? [],
+    periods: periods.data ?? [],
     appointments: appointments.data ?? [],
   };
 }
@@ -169,6 +173,35 @@ export async function addBowel(payload, activeMember) {
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function addPeriod(payload, activeMember) {
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from('period_logs')
+    .insert(withCreator(payload, activeMember))
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePeriod(id, payload) {
+  const client = requireSupabase();
+  const { data, error } = await client
+    .from('period_logs')
+    .update(withUpdatedAt(payload))
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deletePeriod(id) {
+  const client = requireSupabase();
+  const { error } = await client.from('period_logs').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function addAppointment(payload, activeMember) {

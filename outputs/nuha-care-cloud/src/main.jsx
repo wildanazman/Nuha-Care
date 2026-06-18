@@ -19,6 +19,7 @@ import {
   FileText,
   MoreHorizontal,
   Printer,
+  Droplet,
 } from 'lucide-react';
 import {
   addAppointment,
@@ -26,10 +27,12 @@ import {
   addFamilyMember,
   addMeal,
   addMedicine,
+  addPeriod,
   addWeight,
   deleteAppointment,
   deleteMeal,
   deleteMedicine,
+  deletePeriod,
   deleteWeight,
   ensureDefaultFamilyMembers,
   getLogs,
@@ -37,6 +40,7 @@ import {
   updateAppointment,
   updateMeal,
   updateMedicine,
+  updatePeriod,
   updateWeight,
 } from './data';
 import { isSupabaseConfigured } from './supabase';
@@ -60,7 +64,7 @@ function App() {
   const [hasAccess, setHasAccess] = useState(() => localStorage.getItem('nuha-family-access') === 'yes');
   const [activeMember, setActiveMember] = useState(() => JSON.parse(localStorage.getItem('nuha-active-member') || 'null'));
   const [members, setMembers] = useState([]);
-  const [logs, setLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], appointments: [] });
+  const [logs, setLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], periods: [], appointments: [] });
   const [screen, setScreen] = useState('home');
   const [formDate, setFormDate] = useState(today());
   const [loading, setLoading] = useState(false);
@@ -116,6 +120,7 @@ function App() {
       {screen === 'weight' && <WeightScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
       {screen === 'meds' && <MedicineScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
       {screen === 'bowel' && <BowelScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
+      {screen === 'period' && <PeriodScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
       {screen === 'appointments' && <AppointmentsScreen logs={logs} activeMember={activeMember} refresh={refresh} setError={setError} initialDate={formDate} />}
       {screen === 'summary' && <LogsReviewScreen setScreen={setScreen} setFormDate={setFormDate} />}
       {screen === 'more' && <MoreScreen setScreen={setScreen} />}
@@ -208,6 +213,7 @@ function HomeScreen({ logs, activeMember, setScreen }) {
   const todayMeals = logs.meals.filter((row) => sameDay(row));
   const todayMeds = logs.medicines.filter((row) => sameDay(row));
   const todayBowel = logs.bowels.find((row) => sameDay(row));
+  const cycle = cycleStats(logs.periods);
   const nextAppt = logs.appointments.find((row) => row.date >= today());
   return (
     <>
@@ -231,6 +237,9 @@ function HomeScreen({ logs, activeMember, setScreen }) {
           <p className="big small">{todayBowel?.status ?? '-'}</p>
           <p className="muted">{todayBowel ? todayBowel.type || 'Logged' : 'Tak pergi tandas lagi hari ni.'}</p>
         </Card>
+        <Card title="Period" icon={<Droplet size={20} />} tone="pink" action={cycle ? `Day ${cycle.cycleDay}` : ''}>
+          {cycle ? <><p className="big small">{cycle.daysSince}<span> days ago</span></p><p className="muted">{cycle.overdue ? `Overdue by ${-cycle.daysUntilNext} days` : `Next ~${moneyDate(cycle.predictedNext)}`}</p></> : <Empty text="Belum ada period log." />}
+        </Card>
         <Card title="Appointment" icon={<CalendarDays size={20} />} tone="white">
           {nextAppt ? <p><strong>{nextAppt.title}</strong><br /><span className="muted">{moneyDate(nextAppt.date)} {nextAppt.time || ''}</span></p> : <Empty text="Belum ada appointment akan datang." />}
         </Card>
@@ -243,6 +252,7 @@ function HomeScreen({ logs, activeMember, setScreen }) {
             ['weight', 'Weight', <Scale size={22} />],
             ['meds', 'Med', <Pill size={22} />],
             ['bowel', 'Bowel', <History size={22} />],
+            ['period', 'Period', <Droplet size={22} />],
             ['appointments', 'Appt', <CalendarDays size={22} />],
           ].map(([id, label, icon]) => <button key={id} onClick={() => setScreen(id)}><span>{icon}</span>{label}</button>)}
         </div>
@@ -348,6 +358,88 @@ function BowelScreen({ logs, activeMember, refresh, setError, initialDate = toda
   return <SimpleForm title="Bowel Movement" subtitle="Simple daily bowel record." form={form} setForm={setForm} onSave={() => addBowel(form, activeMember)} refresh={refresh} setError={setError} logs={logs.bowels} empty="Belum ada bowel log." fields={<><Field label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} /><div className="grid two"><Select label="Status" value={form.status} options={['Yes', 'No', 'Not sure']} onChange={(v) => setForm({ ...form, status: v })} /><Select label="Type" value={form.type} options={['Normal', 'Hard', 'Soft', 'Watery', 'Not sure']} onChange={(v) => setForm({ ...form, type: v })} /></div><Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} /></>} render={(row) => <BasicLog title={`${row.status}${row.type ? ` - ${row.type}` : ''}`} meta={moneyDate(row.date)} row={row} />} />;
 }
 
+const PERIOD_FLOW = ['Spotting', 'Light', 'Medium', 'Heavy'];
+const PERIOD_SYMPTOMS = ['No issue', 'Cramps', 'Pain', 'Mood changes', 'Tired', 'Headache', 'Bloating', 'Poor appetite'];
+
+function cycleStats(periods) {
+  const starts = (periods ?? []).map((row) => row.date).filter(Boolean).sort();
+  if (!starts.length) return null;
+  const last = starts[starts.length - 1];
+  const lengths = [];
+  for (let index = 1; index < starts.length; index += 1) {
+    lengths.push(dayDiff(starts[index - 1], starts[index]));
+  }
+  const valid = lengths.filter((value) => value > 0 && value < 90);
+  const avg = valid.length ? Math.round(valid.reduce((sum, value) => sum + value, 0) / valid.length) : 28;
+  const predictedNext = addDays(last, avg);
+  const daysSince = dayDiff(last, today());
+  const daysUntilNext = dayDiff(today(), predictedNext);
+  return {
+    last,
+    avg,
+    predictedNext,
+    daysSince,
+    daysUntilNext,
+    cycleDay: daysSince + 1,
+    overdue: daysUntilNext < 0,
+    count: starts.length,
+    estimate: valid.length === 0,
+  };
+}
+
+function periodDuration(row) {
+  if (!row.end_date) return null;
+  const days = dayDiff(row.date, row.end_date) + 1;
+  return days > 0 ? days : null;
+}
+
+function PeriodScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
+  const stats = cycleStats(logs.periods);
+  const initialForm = { date: initialDate, end_date: '', flow: 'Medium', symptoms: [], notes: '' };
+  const [form, setForm] = useState(initialForm);
+  return (
+    <>
+      <section className="intro"><h2>Period</h2><p>Track Nuha menstrual cycle and predict next period.</p></section>
+      <div className="dashboard-grid">
+        <Card title="Last Period" icon={<Droplet size={20} />} tone="pink">
+          {stats ? <><p className="big small">{stats.daysSince}<span> days ago</span></p><p className="muted">{moneyDate(stats.last)} - cycle day {stats.cycleDay}</p></> : <Empty text="Belum ada period log." />}
+        </Card>
+        <Card title="Predicted Next" icon={<CalendarDays size={20} />} tone="white">
+          {stats ? <><p className="big small">{moneyDate(stats.predictedNext)}</p><p className="muted">{stats.overdue ? `Overdue by ${-stats.daysUntilNext} days` : `In ${stats.daysUntilNext} days`}</p></> : <Empty text="Perlu sekurang-kurangnya 1 log." />}
+        </Card>
+        <Card title="Avg Cycle" tone="green">
+          {stats ? <><p className="big small">{stats.avg}<span> days</span></p><p className="muted">{stats.estimate ? 'Anggaran (default 28)' : `Dari ${stats.count} log`}</p></> : <Empty text="-" />}
+        </Card>
+      </div>
+      <SimpleForm
+        title="Add Period Log"
+        subtitle="Record start, end, flow and symptoms."
+        form={form}
+        setForm={setForm}
+        initialForm={initialForm}
+        onSave={() => addPeriod({ ...form, end_date: form.end_date || null }, activeMember)}
+        onUpdate={(id) => updatePeriod(id, { ...form, end_date: form.end_date || null })}
+        onDelete={deletePeriod}
+        toForm={(row) => ({ date: row.date ?? today(), end_date: row.end_date ?? '', flow: row.flow ?? 'Medium', symptoms: row.symptoms ?? [], notes: row.notes ?? '' })}
+        refresh={refresh}
+        setError={setError}
+        logs={logs.periods}
+        empty="Belum ada period log."
+        fields={<>
+          <div className="grid two">
+            <Field label="Start date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
+            <Field label="End date (optional)" type="date" value={form.end_date} onChange={(v) => setForm({ ...form, end_date: v })} />
+          </div>
+          <Select label="Flow" value={form.flow} options={PERIOD_FLOW} onChange={(v) => setForm({ ...form, flow: v })} />
+          <Checklist label="Symptoms" values={form.symptoms} options={PERIOD_SYMPTOMS} onChange={(symptoms) => setForm({ ...form, symptoms })} />
+          <Text label="Notes" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} />
+        </>}
+        render={(row, actions) => <BasicLog title={`${row.flow || 'Period'}${periodDuration(row) ? ` - ${periodDuration(row)} days` : ''}`} meta={`${moneyDate(row.date)}${row.end_date ? ` to ${moneyDate(row.end_date)}` : ''}${row.symptoms?.length ? ` | ${row.symptoms.join(', ')}` : ''}`} row={row} {...actions} />}
+      />
+    </>
+  );
+}
+
 function AppointmentsScreen({ logs, activeMember, refresh, setError, initialDate = today() }) {
   const initialForm = { title: '', date: initialDate, time: '', location: '', reason: '', questions: '', after_notes: '' };
   const [form, setForm] = useState(initialForm);
@@ -391,7 +483,7 @@ function SimpleForm({ title, subtitle, fields, onSave, onUpdate, onDelete, toFor
 
 function LogsReviewScreen({ setScreen, setFormDate }) {
   const [selectedDate, setSelectedDate] = useState(today());
-  const [dayLogs, setDayLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], appointments: [] });
+  const [dayLogs, setDayLogs] = useState({ weights: [], meals: [], medicines: [], bowels: [], periods: [], appointments: [] });
   const [loadingDay, setLoadingDay] = useState(false);
   const [dayError, setDayError] = useState('');
 
@@ -420,6 +512,7 @@ function LogsReviewScreen({ setScreen, setFormDate }) {
     ...dayLogs.weights.map((row) => row.notes),
     ...dayLogs.medicines.map((row) => row.notes),
     ...dayLogs.bowels.map((row) => row.notes),
+    ...dayLogs.periods.map((row) => row.notes),
     ...dayLogs.appointments.map((row) => row.after_notes),
     ...dayLogs.meals.map((row) => row.after_notes || row.before_notes),
   ].filter(Boolean);
@@ -440,6 +533,9 @@ function LogsReviewScreen({ setScreen, setFormDate }) {
         </ReviewSection>
         <ReviewSection title="Toilet Log" button="Add Toilet Log for this date" onAdd={() => addForDate('bowel')}>
           {dayLogs.bowels.length ? dayLogs.bowels.map((row) => <ReviewItem key={row.id} title={`Poop: ${row.status}`} lines={[`Pee status: -`, `Pee frequency: -`, `Poop type: ${row.type || '-'}`, row.notes, `Logged by ${row.created_by_name || '-'}`]} />) : <Empty text="Belum ada toilet log untuk tarikh ini." />}
+        </ReviewSection>
+        <ReviewSection title="Period" button="Add Period for this date" onAdd={() => addForDate('period')}>
+          {dayLogs.periods.length ? dayLogs.periods.map((row) => <ReviewItem key={row.id} title={`${row.flow || 'Period'}${periodDuration(row) ? ` - ${periodDuration(row)} days` : ''}`} lines={[row.end_date ? `Until ${moneyDate(row.end_date)}` : '', row.symptoms?.length ? row.symptoms.join(', ') : '', row.notes, `Logged by ${row.created_by_name || '-'}`]} />) : <Empty text="Belum ada period log untuk tarikh ini." />}
         </ReviewSection>
         <ReviewSection title="Appointments" button="Add Appointment for this date" onAdd={() => addForDate('appointments')}>
           {dayLogs.appointments.length ? dayLogs.appointments.map((row) => <ReviewItem key={row.id} title={row.title} lines={[row.time, row.location, row.reason, row.after_notes]} />) : <Empty text="Tiada appointment untuk tarikh ini." />}
@@ -495,6 +591,13 @@ function addDays(date, amount) {
   const next = new Date(`${date}T00:00:00`);
   next.setDate(next.getDate() + amount);
   return dateInputValue(next);
+}
+
+function dayDiff(from, to) {
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  return Math.round((end - start) / 86400000);
 }
 
 function datesBetween(startDate, endDate) {
@@ -815,3 +918,11 @@ function Checklist({ label, values, options, onChange }) {
 function SectionTitle({ number, title }) { return <h3 className="section-title"><span>{number}</span>{title}</h3>; }
 
 createRoot(document.getElementById('root')).render(<App />);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
