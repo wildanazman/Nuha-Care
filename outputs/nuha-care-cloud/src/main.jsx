@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -23,6 +23,7 @@ import {
   Camera,
   ImagePlus,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import {
   addAppointment,
@@ -954,11 +955,44 @@ function Field({ label, onChange, ...props }) {
 function Text({ label, value, onChange }) { return <label>{label}<textarea value={value} onChange={(e) => onChange(e.target.value)} rows="3" /></label>; }
 function Select({ label, value, options, onChange }) { return <label>{label}<select value={value} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
 function Combo({ label, value, options, onChange }) {
-  const listId = `dl-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    function onDoc(event) {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+    };
+  }, [open]);
+  const query = (value ?? '').trim().toLowerCase();
+  const filtered = query ? options.filter((option) => option.toLowerCase().includes(query)) : options;
   return (
-    <label>{label}
-      <input list={listId} value={value} placeholder="Pilih atau taip sendiri" onChange={(e) => onChange(e.target.value)} />
-      <datalist id={listId}>{options.map((option) => <option key={option} value={option} />)}</datalist>
+    <label className="combo" ref={wrapRef}>{label}
+      <div className="combo-control">
+        <input
+          value={value}
+          placeholder="Pilih atau taip sendiri"
+          onChange={(event) => { onChange(event.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+        />
+        <button type="button" className="combo-toggle" aria-label="Buka senarai" onClick={() => setOpen((prev) => !prev)}>
+          <ChevronDown size={20} />
+        </button>
+      </div>
+      {open && filtered.length > 0 && (
+        <div className="combo-menu">
+          {filtered.map((option) => (
+            <button type="button" key={option} className="combo-option" onClick={() => { onChange(option); setOpen(false); }}>
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
     </label>
   );
 }
